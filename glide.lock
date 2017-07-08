@@ -1,0 +1,81 @@
+hash: 224175b3e854ea42c41d9b5b4f80112b45eb71a3cef7924cde72118056ca7231
+updated: 2017-07-07T09:58:14.59621061-07:00
+imports:
+- name: git.apache.org/thrift.git
+  version: e41e47c2b4b2407bac525d203b281c63fb253978
+  subpackages:
+  - lib/go/thrift
+- name: github.com/aviddiviner/go-murmur
+  version: b9740d71e571c1f4ccb570b9bc7f352329d3e600
+- name: github.com/bkaradzic/go-lz4
+  version: 7224d8d8f27ef618c0a95f1ae69dbb0488abc33a
+- name: github.com/cenkalti/backoff
+  version: 5d150e7eec023ce7a124856b37c68e54b4050ac7
+- name: github.com/curator-go/curator
+  version: 3844cf4b76fd7c67981c6be153cadd9d054ea03c
+  subpackages:
+  - recipes/cache
+- name: github.com/davecgh/go-spew
+  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
+  subpackages:
+  - spew
+- name: github.com/hashicorp/golang-lru
+  version: 0a025b7e63adc15a622f29b0b2c4c3848243bbf6
+- name: github.com/karlseguin/ccache
+  version: a2d62155777b39595c825ed3824279e642a5db3c
+- name: github.com/liveramp/hank
+  version: 02714809b158733750feab238985b1713b7b22e1
+  subpackages:
+  - hank-core/src/main/go/hank
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
+- name: github.com/samuel/go-zookeeper
+  version: 1d7be4effb13d2d908342d349d71a284a7542693
+  subpackages:
+  - zk
+- name: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
+- name: github.com/stretchr/objx
+  version: cbeaeb16a013161a98496fad62933b1d21786672
+- name: github.com/stretchr/testify
+  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
+  subpackages:
+  - assert
+  - mock
+  - require
+  - suite
+- name: github.com/tevino/abool
+  version: 3c25f2fe7cd0ef3eabefce1d90efd69a65d35b12
+- name: go4.org
+  version: 16ace784e4b16df1d51c3435223b1d602cd43bfa
+  subpackages:
+  - syncutil/singleflight
+- name: golang.org/x/crypto
+  version: 7e9105388ebff089b3f99f0ef676ea55a6da3a7e
+  subpackages:
+  - acme/autocert
+  - ssh/terminal
+- name: golang.org/x/net
+  version: a8e8f92cd65f5ff48599999fa4001d9b95ecea85
+  subpackages:
+  - context
+- name: golang.org/x/oauth2
+  version: f047394b6d14284165300fd82dad67edb3a4d7f6
+  subpackages:
+  - google
+- name: golang.org/x/text
+  version: 19e51611da83d6be54ddafce4a4af510cb3e9ea4
+  subpackages:
+  - encoding
+  - encoding/charmap
+  - encoding/htmlindex
+  - secure/bidirule
+  - transform
+  - unicode/norm
+- name: google.golang.org/api
+  version: d9d64fe74969b80fb4a435ae9280c9ff061a6097
+  subpackages:
+  - compute/v1
+testImports: []
