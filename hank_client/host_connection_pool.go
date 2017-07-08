@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/bpodgursky/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/iface"
 	"math/rand"
 	"sort"
 	"sync"

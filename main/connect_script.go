@@ -5,8 +5,8 @@ import (
 	"github.com/curator-go/curator"
 	"os"
 	"time"
-	"github.com/bpodgursky/hank-go-client/zk_coordinator"
-	"github.com/bpodgursky/hank-go-client/hank_client"
+	"github.com/liveramp/hank-go-client/zk_coordinator"
+	"github.com/liveramp/hank-go-client/hank_client"
 )
 
 func main() {

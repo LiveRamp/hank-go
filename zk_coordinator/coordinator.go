@@ -3,8 +3,8 @@ package zk_coordinator
 import (
 	"github.com/curator-go/curator"
 	"path"
-	"github.com/bpodgursky/hank-go-client/iface"
-	"github.com/bpodgursky/hank-go-client/curatorext"
+	"github.com/liveramp/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/curatorext"
 )
 
 const KEY_DOMAIN_ID_COUNTER string = ".domain_id_counter"

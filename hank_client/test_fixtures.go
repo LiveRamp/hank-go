@@ -2,13 +2,13 @@ package hank_client
 
 import (
 	"github.com/curator-go/curator"
-	"github.com/bpodgursky/hank-go-client/iface"
-	"github.com/bpodgursky/hank-go-client/thrift_services"
+	"github.com/liveramp/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/thrift_services"
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/bpodgursky/hank-go-client/fixtures"
+	"github.com/liveramp/hank-go-client/fixtures"
 	"testing"
 	"strconv"
-	"github.com/bpodgursky/hank-go-client/zk_coordinator"
+	"github.com/liveramp/hank-go-client/zk_coordinator"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
 )
 

@@ -1,7 +1,7 @@
 package zk_coordinator
 
 import (
-  "github.com/bpodgursky/hank-go-client/iface"
+  "github.com/liveramp/hank-go-client/iface"
 )
 
 type ZkHostDomainPartition struct {

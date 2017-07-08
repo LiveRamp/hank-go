@@ -3,14 +3,14 @@ package hank_client
 import (
 	"errors"
 	"fmt"
-	"github.com/bpodgursky/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/iface"
 	"math"
 	"os"
 	"strconv"
 	"sync"
 	"time"
 	"github.com/karlseguin/ccache"
-	"github.com/bpodgursky/hank-go-client/syncext"
+	"github.com/liveramp/hank-go-client/syncext"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
 )
 

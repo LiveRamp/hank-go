@@ -2,12 +2,12 @@ package zk_coordinator
 
 import (
 	"fmt"
-	"github.com/bpodgursky/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/iface"
 	"github.com/curator-go/curator"
 	"path"
 	"regexp"
 	"strconv"
-	"github.com/bpodgursky/hank-go-client/curatorext"
+	"github.com/liveramp/hank-go-client/curatorext"
 )
 
 var RING_REGEX = regexp.MustCompile("ring-([0-9]+)")

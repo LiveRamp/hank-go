@@ -2,7 +2,7 @@ package curatorext
 
 import (
 	"fmt"
-	"github.com/bpodgursky/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/iface"
 	"github.com/curator-go/curator"
 	"github.com/curator-go/curator/recipes/cache"
 	"path"

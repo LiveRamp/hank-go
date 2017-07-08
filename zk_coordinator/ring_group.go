@@ -4,8 +4,8 @@ import (
 	"github.com/curator-go/curator"
 	"path"
 	"strconv"
-	"github.com/bpodgursky/hank-go-client/iface"
-	"github.com/bpodgursky/hank-go-client/curatorext"
+	"github.com/liveramp/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/curatorext"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
 )
 

@@ -1,8 +1,8 @@
 package curatorext
 
 import (
-	"github.com/bpodgursky/hank-go-client/fixtures"
-	"github.com/bpodgursky/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/fixtures"
+	"github.com/liveramp/hank-go-client/iface"
 	"time"
 	"path"
 	"reflect"

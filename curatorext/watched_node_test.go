@@ -2,9 +2,9 @@ package curatorext
 
 import (
 	"reflect"
-	"github.com/bpodgursky/hank-go-client/fixtures"
+	"github.com/liveramp/hank-go-client/fixtures"
 	"github.com/curator-go/curator"
-	"github.com/bpodgursky/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/iface"
 	"fmt"
 	"time"
 	"github.com/stretchr/testify/assert"

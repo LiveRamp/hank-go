@@ -2,13 +2,13 @@ package hank_client
 
 import (
 	"fmt"
-	"github.com/bpodgursky/hank-go-client/fixtures"
-	"github.com/bpodgursky/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/fixtures"
+	"github.com/liveramp/hank-go-client/iface"
 	"github.com/curator-go/curator"
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
-	"github.com/bpodgursky/hank-go-client/zk_coordinator"
+	"github.com/liveramp/hank-go-client/zk_coordinator"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
 )
 

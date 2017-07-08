@@ -4,12 +4,12 @@ import (
 	"github.com/curator-go/curator"
 	"path"
 	"strings"
-	"github.com/bpodgursky/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/iface"
 	"fmt"
 	"github.com/satori/go.uuid"
 	"math/big"
 	"strconv"
-	"github.com/bpodgursky/hank-go-client/curatorext"
+	"github.com/liveramp/hank-go-client/curatorext"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
 )
 

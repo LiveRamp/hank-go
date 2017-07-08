@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
-	"github.com/bpodgursky/hank-go-client/fixtures"
-	"github.com/bpodgursky/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/fixtures"
+	"github.com/liveramp/hank-go-client/iface"
 )
 
 func TestZkCoordinator(t *testing.T) {
