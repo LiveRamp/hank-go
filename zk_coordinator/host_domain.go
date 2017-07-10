@@ -2,6 +2,7 @@ package zk_coordinator
 
 import (
 	"github.com/liveramp/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 type ZkHostDomain struct {
@@ -13,11 +14,11 @@ func newZkHostDomain(host *ZkHost, domainId iface.DomainID) *ZkHostDomain {
 	return &ZkHostDomain{host: host, domainId: domainId}
 }
 
-func (p *ZkHostDomain) GetDomain(ctx *iface.ThreadCtx, coordinator iface.Coordinator) (iface.Domain, error) {
+func (p *ZkHostDomain) GetDomain(ctx *thriftext.ThreadCtx, coordinator iface.Coordinator) (iface.Domain, error) {
 	return coordinator.GetDomainById(ctx, p.domainId)
 }
 
-func (p *ZkHostDomain) AddPartition(ctx *iface.ThreadCtx, partNum iface.PartitionID) iface.HostDomainPartition {
+func (p *ZkHostDomain) AddPartition(ctx *thriftext.ThreadCtx, partNum iface.PartitionID) iface.HostDomainPartition {
 	return p.host.addPartition(ctx, p.domainId, partNum)
 }
 

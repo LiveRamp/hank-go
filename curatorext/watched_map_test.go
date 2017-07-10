@@ -2,15 +2,15 @@ package curatorext
 
 import (
 	"github.com/liveramp/hank-go-client/fixtures"
-	"github.com/liveramp/hank-go-client/iface"
 	"time"
 	"path"
 	"reflect"
 	"github.com/curator-go/curator"
 	"testing"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
-func LoadString(ctx *iface.ThreadCtx, client curator.CuratorFramework, listener iface.DataChangeNotifier, path string) (interface{}, error) {
+func LoadString(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error) {
 	data, error := client.GetData().ForPath(path)
 	return string(data), error
 }
@@ -20,7 +20,7 @@ func TestZkWatchedMap(t *testing.T) {
 
 	root := "/some/path"
 
-	wmap, _ := NewZkWatchedMap(client, root, &iface.NoOp{}, LoadString)
+	wmap, _ := NewZkWatchedMap(client, root, &thriftext.NoOp{}, LoadString)
 	time.Sleep(time.Second)
 
 	child1Path := path.Join(root, "child1")

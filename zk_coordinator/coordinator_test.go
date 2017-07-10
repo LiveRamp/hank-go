@@ -17,7 +17,7 @@ func TestZkCoordinator(t *testing.T) {
 	zkCoordinator, err1 := createCoordinator(client)
 	zkCoordinator3, err2 := createCoordinator(client)
 
-	ctx := iface.NewThreadCtx()
+	ctx := curatorext.NewThreadCtx()
 
 	if err1 != nil {
 		assert.Fail(t, "Error initializing coordinator 1")

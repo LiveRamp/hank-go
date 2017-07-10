@@ -7,6 +7,7 @@ import (
 	"github.com/liveramp/hank-go-client/iface"
 	"github.com/liveramp/hank-go-client/curatorext"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 const CLIENT_ROOT string = "c"
@@ -20,10 +21,10 @@ type ZkRingGroup struct {
 	clients *curatorext.ZkWatchedMap
 	rings   *curatorext.ZkWatchedMap
 
-	localNotifier *iface.MultiNotifier
+	localNotifier *thriftext.MultiNotifier
 }
 
-func createZkRingGroup(ctx *iface.ThreadCtx, client curator.CuratorFramework, name string, rootPath string) (iface.RingGroup, error) {
+func createZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, name string, rootPath string) (iface.RingGroup, error) {
 	rgRootPath := path.Join(rootPath, name)
 
 	err := curatorext.AssertEmpty(client, rgRootPath)
@@ -33,7 +34,7 @@ func createZkRingGroup(ctx *iface.ThreadCtx, client curator.CuratorFramework, na
 
 	curatorext.CreateWithParents(client, curator.PERSISTENT, rgRootPath, nil)
 
-	listener := iface.NewMultiNotifier()
+	listener := thriftext.NewMultiNotifier()
 
 	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), listener, loadClientMetadata)
 	if err != nil {
@@ -49,7 +50,7 @@ func createZkRingGroup(ctx *iface.ThreadCtx, client curator.CuratorFramework, na
 
 }
 
-func loadZkRingGroup(ctx *iface.ThreadCtx, client curator.CuratorFramework, listener iface.DataChangeNotifier, rgRootPath string) (interface{}, error) {
+func loadZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, rgRootPath string) (interface{}, error) {
 
 	err := curatorext.AssertExists(client, rgRootPath)
 	if err != nil {
@@ -61,7 +62,7 @@ func loadZkRingGroup(ctx *iface.ThreadCtx, client curator.CuratorFramework, list
 		return nil, err
 	}
 
-	multiListener := iface.NewMultiNotifier()
+	multiListener := thriftext.NewMultiNotifier()
 	multiListener.AddClient(listener)
 
 	rings, err := curatorext.NewZkWatchedMap(client, rgRootPath, multiListener, loadZkRing)
@@ -71,7 +72,7 @@ func loadZkRingGroup(ctx *iface.ThreadCtx, client curator.CuratorFramework, list
 
 //  loader
 
-func loadClientMetadata(ctx *iface.ThreadCtx, client curator.CuratorFramework, listener iface.DataChangeNotifier, path string) (interface{}, error) {
+func loadClientMetadata(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error) {
 	metadata := hank.NewClientMetadata()
 	curatorext.LoadThrift(ctx, path, client, metadata)
 	return metadata, nil
@@ -79,7 +80,7 @@ func loadClientMetadata(ctx *iface.ThreadCtx, client curator.CuratorFramework, l
 
 //  methods
 
-func (p *ZkRingGroup) RegisterClient(ctx *iface.ThreadCtx, metadata *hank.ClientMetadata) error {
+func (p *ZkRingGroup) RegisterClient(ctx *thriftext.ThreadCtx, metadata *hank.ClientMetadata) error {
 	return ctx.SetThrift(curatorext.CreateEphemeralSequential(path.Join(p.clients.Root, CLIENT_NODE), p.client), metadata)
 }
 
@@ -87,7 +88,7 @@ func (p *ZkRingGroup) GetName() string {
 	return p.name
 }
 
-func (p *ZkRingGroup) AddListener(listener iface.DataChangeNotifier) {
+func (p *ZkRingGroup) AddListener(listener thriftext.DataChangeNotifier) {
 	p.localNotifier.AddClient(listener)
 }
 
@@ -106,7 +107,7 @@ func ringName(ringNum iface.RingID) string {
 	return "ring-" + strconv.Itoa(int(ringNum))
 }
 
-func (p *ZkRingGroup) AddRing(ctx *iface.ThreadCtx, ringNum iface.RingID) (iface.Ring, error) {
+func (p *ZkRingGroup) AddRing(ctx *thriftext.ThreadCtx, ringNum iface.RingID) (iface.Ring, error) {
 	ringChild := ringName(ringNum)
 	ringRoot := path.Join(p.rings.Root, ringChild)
 

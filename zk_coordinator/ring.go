@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"github.com/liveramp/hank-go-client/curatorext"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 var RING_REGEX = regexp.MustCompile("ring-([0-9]+)")
@@ -20,10 +21,10 @@ type ZkRing struct {
 	client curator.CuratorFramework
 
 	hosts    *curatorext.ZkWatchedMap
-	listener iface.DataChangeNotifier
+	listener thriftext.DataChangeNotifier
 }
 
-func loadZkRing(ctx *iface.ThreadCtx, client curator.CuratorFramework, listener iface.DataChangeNotifier, root string) (interface{}, error) {
+func loadZkRing(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, root string) (interface{}, error) {
 	matches := RING_REGEX.FindStringSubmatch(path.Base(root))
 
 	//  dumb design and rings are directly in the RG root, but can't change it here
@@ -45,7 +46,7 @@ func loadZkRing(ctx *iface.ThreadCtx, client curator.CuratorFramework, listener 
 	return nil, nil
 }
 
-func createZkRing(ctx *iface.ThreadCtx, root string, num iface.RingID, listener iface.DataChangeNotifier, client curator.CuratorFramework) (*ZkRing, error) {
+func createZkRing(ctx *thriftext.ThreadCtx, root string, num iface.RingID, listener thriftext.DataChangeNotifier, client curator.CuratorFramework) (*ZkRing, error) {
 	curatorext.CreateWithParents(client, curator.PERSISTENT, root, nil)
 
 	fmt.Println("Created via creation")
@@ -60,7 +61,7 @@ func createZkRing(ctx *iface.ThreadCtx, root string, num iface.RingID, listener 
 
 //  public methods
 
-func (p *ZkRing) AddHost(ctx *iface.ThreadCtx, hostName string, port int, hostFlags []string) (iface.Host, error) {
+func (p *ZkRing) AddHost(ctx *thriftext.ThreadCtx, hostName string, port int, hostFlags []string) (iface.Host, error) {
 
 	host, err := CreateZkHost(ctx, p.client, p.listener, p.hosts.Root, hostName, port, hostFlags)
 	if err != nil {
@@ -75,7 +76,7 @@ func (p *ZkRing) AddHost(ctx *iface.ThreadCtx, hostName string, port int, hostFl
 	return host, err
 }
 
-func (p *ZkRing) GetHosts(ctx *iface.ThreadCtx) []iface.Host {
+func (p *ZkRing) GetHosts(ctx *thriftext.ThreadCtx) []iface.Host {
 
 	hosts := []iface.Host{}
 	for _, item := range p.hosts.Values() {

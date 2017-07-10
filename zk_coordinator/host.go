@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"github.com/liveramp/hank-go-client/curatorext"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 const ASSIGNMENTS_PATH string = "a"
@@ -23,10 +24,10 @@ type ZkHost struct {
 	assignedPartitions *curatorext.ZkWatchedNode
 	state              *curatorext.ZkWatchedNode
 
-	listener iface.DataChangeNotifier
+	listener thriftext.DataChangeNotifier
 }
 
-func CreateZkHost(ctx *iface.ThreadCtx, client curator.CuratorFramework, listener iface.DataChangeNotifier, basePath string, hostName string, port int, flags []string) (iface.Host, error) {
+func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, basePath string, hostName string, port int, flags []string) (iface.Host, error) {
 
 	uuid := uuid.NewV4().Bytes()
 	last := uuid[len(uuid)-8:]
@@ -46,7 +47,7 @@ func CreateZkHost(ctx *iface.ThreadCtx, client curator.CuratorFramework, listene
 		return nil, err
 	}
 
-	adapter := &iface.Adapter{Notifier: listener}
+	adapter := &thriftext.Adapter{Notifier: listener}
 	node.AddListener(adapter)
 
 	assignmentMetadata := hank.NewHostAssignmentsMetadata()
@@ -80,14 +81,14 @@ func CreateZkHost(ctx *iface.ThreadCtx, client curator.CuratorFramework, listene
 	return &ZkHost{rootPath, node, partitionAssignments, state, listener}, nil
 }
 
-func loadZkHost(ctx *iface.ThreadCtx, client curator.CuratorFramework, listener iface.DataChangeNotifier, rootPath string) (interface{}, error) {
+func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, rootPath string) (interface{}, error) {
 
 	node, err := curatorext.LoadThriftWatchedNode(client, rootPath, iface.NewHostMetadata)
 	if err != nil {
 		return nil, err
 	}
 
-	adapter := &iface.Adapter{Notifier: listener}
+	adapter := &thriftext.Adapter{Notifier: listener}
 	node.AddListener(adapter)
 
 	assignments, err := curatorext.LoadThriftWatchedNode(client, assignmentsRoot(rootPath), iface.NewHostAssignmentMetadata)
@@ -112,7 +113,7 @@ func assignmentsRoot(rootPath string) string {
 }
 
 
-func (p *ZkHost) addPartition(ctx *iface.ThreadCtx, domainId iface.DomainID, partNum iface.PartitionID) iface.HostDomainPartition {
+func (p *ZkHost) addPartition(ctx *thriftext.ThreadCtx, domainId iface.DomainID, partNum iface.PartitionID) iface.HostDomainPartition {
 
 	p.assignedPartitions.Update(ctx, func(orig interface{}) interface{} {
 		metadata := iface.AsHostAssignmentsMetadata(orig)
@@ -163,7 +164,7 @@ func (p *ZkHost) isDeletable(domainId iface.DomainID, partitionNumber iface.Part
 	return partitionMetadata.Deletable
 }
 
-func (p *ZkHost) setCurrentDomainGroupVersion(ctx *iface.ThreadCtx, domainId iface.DomainID, partitionNumber iface.PartitionID, version iface.VersionID) error {
+func (p *ZkHost) setCurrentDomainGroupVersion(ctx *thriftext.ThreadCtx, domainId iface.DomainID, partitionNumber iface.PartitionID, version iface.VersionID) error {
 
 	_, err := p.assignedPartitions.Update(ctx, func(orig interface{}) interface{} {
 		metadata := iface.AsHostAssignmentsMetadata(orig)
@@ -199,15 +200,15 @@ func (p  *ZkHost) GetID() string {
 	return path.Base(p.path)
 }
 
-func (p *ZkHost) AddStateChangeListener(listener iface.DataListener) {
+func (p *ZkHost) AddStateChangeListener(listener thriftext.DataListener) {
 	p.state.AddListener(listener)
 }
 
-func (p *ZkHost) GetMetadata(ctx *iface.ThreadCtx) *hank.HostMetadata {
+func (p *ZkHost) GetMetadata(ctx *thriftext.ThreadCtx) *hank.HostMetadata {
 	return iface.AsHostMetadata(p.metadata.Get())
 }
 
-func (p *ZkHost) GetAssignedDomains(ctx *iface.ThreadCtx) []iface.HostDomain {
+func (p *ZkHost) GetAssignedDomains(ctx *thriftext.ThreadCtx) []iface.HostDomain {
 	assignedDomains := iface.AsHostAssignmentsMetadata(p.assignedPartitions.Get())
 
 	hostDomains := []iface.HostDomain{}
@@ -218,11 +219,11 @@ func (p *ZkHost) GetAssignedDomains(ctx *iface.ThreadCtx) []iface.HostDomain {
 	return hostDomains
 }
 
-func (p *ZkHost) GetEnvironmentFlags(ctx *iface.ThreadCtx) map[string]string {
+func (p *ZkHost) GetEnvironmentFlags(ctx *thriftext.ThreadCtx) map[string]string {
 	return iface.AsHostMetadata(p.metadata.Get()).EnvironmentFlags
 }
 
-func (p *ZkHost) SetEnvironmentFlags(ctx *iface.ThreadCtx, flags map[string]string) error {
+func (p *ZkHost) SetEnvironmentFlags(ctx *thriftext.ThreadCtx, flags map[string]string) error {
 
 	_, err := p.metadata.Update(ctx, func(val interface{}) interface{} {
 		metadata := iface.AsHostMetadata(val)
@@ -233,7 +234,7 @@ func (p *ZkHost) SetEnvironmentFlags(ctx *iface.ThreadCtx, flags map[string]stri
 	return err
 }
 
-func (p *ZkHost) SetState(ctx *iface.ThreadCtx, state iface.HostState) error {
+func (p *ZkHost) SetState(ctx *thriftext.ThreadCtx, state iface.HostState) error {
 	return p.state.Set(ctx, string(state))
 }
 
@@ -241,7 +242,7 @@ func (p *ZkHost) GetState() iface.HostState {
 	return iface.HostState(p.state.Get().(string))
 }
 
-func (p *ZkHost) AddDomain(ctx *iface.ThreadCtx, domain iface.Domain) (iface.HostDomain, error) {
+func (p *ZkHost) AddDomain(ctx *thriftext.ThreadCtx, domain iface.Domain) (iface.HostDomain, error) {
 	domainId := domain.GetId()
 
 	_, err := p.assignedPartitions.Update(ctx, func(orig interface{}) interface{} {
@@ -272,7 +273,7 @@ func (p *ZkHost) GetAddress() *iface.PartitionServerAddress {
 	return &iface.PartitionServerAddress{HostName: metadata.HostName, PortNumber: metadata.PortNumber}
 }
 
-func (p *ZkHost) GetHostDomain(ctx *iface.ThreadCtx, domainId iface.DomainID) iface.HostDomain {
+func (p *ZkHost) GetHostDomain(ctx *thriftext.ThreadCtx, domainId iface.DomainID) iface.HostDomain {
 
 	assignedDomains := iface.AsHostAssignmentsMetadata(p.assignedPartitions.Get())
 	metadata := assignedDomains.Domains[int32(domainId)]

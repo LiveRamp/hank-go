@@ -9,7 +9,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"time"
 	"fmt"
-	"github.com/liveramp/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 
@@ -79,7 +79,7 @@ func SafeEnsureParents(client curator.CuratorFramework, mode curator.CreateMode,
 	return nil
 }
 
-func LoadThrift(ctx *iface.ThreadCtx, path string, client curator.CuratorFramework, tStruct thrift.TStruct) error {
+func LoadThrift(ctx *thriftext.ThreadCtx, path string, client curator.CuratorFramework, tStruct thrift.TStruct) error {
 	data, err := client.GetData().ForPath(path)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func LoadThrift(ctx *iface.ThreadCtx, path string, client curator.CuratorFramewo
 	return nil
 }
 
-func CreateEphemeralSequential(root string, framework curator.CuratorFramework) iface.SetBytes {
+func CreateEphemeralSequential(root string, framework curator.CuratorFramework) thriftext.SetBytes {
 	return func(data []byte) error {
 		_, err := framework.Create().WithMode(curator.EPHEMERAL_SEQUENTIAL).ForPathWithData(root, data)
 		return err

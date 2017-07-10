@@ -4,12 +4,11 @@ import (
 	"reflect"
 	"github.com/liveramp/hank-go-client/fixtures"
 	"github.com/curator-go/curator"
-	"github.com/liveramp/hank-go-client/iface"
 	"fmt"
 	"time"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 func TestZkWatchedNode(t *testing.T) {
@@ -25,7 +24,7 @@ func TestZkWatchedNode(t *testing.T) {
 		t.Fail()
 	}
 
-	ctx := iface.NewThreadCtx()
+	ctx := thriftext.NewThreadCtx()
 
 	time.Sleep(time.Second)
 
@@ -46,7 +45,7 @@ func TestZkWatchedNode2(t *testing.T) {
 	node, _ := NewBytesWatchedNode(client, curator.PERSISTENT, "/some/path", []byte("0"))
 	node2, _ := LoadBytesWatchedNode(client, "/some/path")
 
-	ctx := iface.NewThreadCtx()
+	ctx := thriftext.NewThreadCtx()
 
 	testData := "Test String"
 	setErr := node.Set(ctx, []byte(testData))
@@ -61,32 +60,6 @@ func TestZkWatchedNode2(t *testing.T) {
 			return reflect.DeepEqual(string(val), testData)
 		}
 		return false
-	})
-
-	fixtures.TeardownZookeeper(cluster, client)
-}
-
-func TestUpdateWatchedNode(t *testing.T) {
-	cluster, client := fixtures.SetupZookeeper(t)
-
-	hostData := hank.NewHostAssignmentsMetadata()
-	hostData.Domains = make(map[int32]*hank.HostDomainMetadata)
-	hostData.Domains[0] = hank.NewHostDomainMetadata()
-
-	ctx := iface.NewThreadCtx()
-
-	node, _ := NewThriftWatchedNode(client, curator.PERSISTENT, "/some/path", ctx, iface.NewHostAssignmentMetadata, hostData)
-	node2, _ := LoadThriftWatchedNode(client, "/some/path", iface.NewHostAssignmentMetadata)
-
-	node.Update(ctx, func(val interface{}) interface{} {
-		meta := val.(*hank.HostAssignmentsMetadata)
-		meta.Domains[1] = hank.NewHostDomainMetadata()
-		return meta
-	})
-
-	fixtures.WaitUntilOrFail(t, func() bool {
-		meta := iface.AsHostAssignmentsMetadata(node2.Get())
-		return meta != nil && len(meta.Domains) == 2
 	})
 
 	fixtures.TeardownZookeeper(cluster, client)

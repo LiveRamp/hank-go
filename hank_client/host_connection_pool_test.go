@@ -10,6 +10,7 @@ import (
 	"testing"
 	"github.com/liveramp/hank-go-client/zk_coordinator"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 func Exception() *hank.HankResponse {
@@ -92,25 +93,25 @@ func Key1() []byte {
 	return []byte("1")
 }
 
-func setupHangingServerClient(t *testing.T, ctx *iface.ThreadCtx, client curator.CuratorFramework, i int, lock *sync.Mutex) (*CountingHandler, iface.Host, func(), *HostConnection) {
+func setupHangingServerClient(t *testing.T, ctx *thriftext.ThreadCtx, client curator.CuratorFramework, i int, lock *sync.Mutex) (*CountingHandler, iface.Host, func(), *HostConnection) {
 	handler := &CountingHandler{internal: &HangingResponse{lock: lock}}
 	host, close, conn := setupServerClient(t, handler, ctx, client, i)
 	return handler, host, close, conn
 }
 
-func setupCountingServerClient(t *testing.T, ctx *iface.ThreadCtx, client curator.CuratorFramework, i int) (*CountingHandler, iface.Host, func(), *HostConnection) {
+func setupCountingServerClient(t *testing.T, ctx *thriftext.ThreadCtx, client curator.CuratorFramework, i int) (*CountingHandler, iface.Host, func(), *HostConnection) {
 	handler := &CountingHandler{internal: &ConstValue{val: Val1()}}
 	host, close, conn := setupServerClient(t, handler, ctx, client, i)
 	return handler, host, close, conn
 }
 
-func setupFailingServerClient(t *testing.T, ctx *iface.ThreadCtx, client curator.CuratorFramework, i int) (*CountingHandler, iface.Host, func(), *HostConnection) {
+func setupFailingServerClient(t *testing.T, ctx *thriftext.ThreadCtx, client curator.CuratorFramework, i int) (*CountingHandler, iface.Host, func(), *HostConnection) {
 	handler := &CountingHandler{internal: &FailingValue{}}
 	host, close, conn := setupServerClient(t, handler, ctx, client, i)
 	return handler, host, close, conn
 }
 
-func setupServerClient(t *testing.T, server hank.PartitionServer, ctx *iface.ThreadCtx, client curator.CuratorFramework, i int) (iface.Host, func(), *HostConnection) {
+func setupServerClient(t *testing.T, server hank.PartitionServer, ctx *thriftext.ThreadCtx, client curator.CuratorFramework, i int) (iface.Host, func(), *HostConnection) {
 	host, close := createHostServer(t, ctx, client, i, server)
 
 	conn := NewHostConnection(host, 100, 100, 100, 100)
@@ -137,8 +138,8 @@ func byAddress(connections []*HostConnection) map[string][]*HostConnection {
 	return hostConnections
 }
 
-func setUpCoordinator(client curator.CuratorFramework) (*iface.ThreadCtx, iface.Domain) {
-	ctx := iface.NewThreadCtx()
+func setUpCoordinator(client curator.CuratorFramework) (*thriftext.ThreadCtx, iface.Domain) {
+	ctx := thriftext.NewThreadCtx()
 	cdr, _ := zk_coordinator.NewZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",

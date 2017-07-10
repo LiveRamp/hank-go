@@ -20,7 +20,7 @@ func main() {
 	client := curator.NewClient(argsWithoutProg[0], curator.NewRetryNTimes(1, time.Second))
 	client.Start()
 
-	ctx := iface.NewThreadCtx()
+	ctx := curatorext.NewThreadCtx()
 
 	coordinator, coordErr := zk_coordinator.NewZkCoordinator(client, "/hank/domains", "/hank/ring_groups", "/hank/domain_groups")
 	if coordErr != nil {

@@ -3,46 +3,8 @@ package iface
 import (
 	"strconv"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
-
-type DataListener interface {
-	OnDataChange(newVal interface{})
-}
-
-type DataChangeNotifier interface {
-	OnChange()
-}
-
-type NoOp struct{}
-
-func (t *NoOp) OnDataChange(newVal interface{}) error { return nil }
-func (t *NoOp) OnChange()                             {}
-
-type Adapter struct {
-	Notifier DataChangeNotifier
-}
-
-func (t *Adapter) OnDataChange(newVal interface{}) {
-	t.Notifier.OnChange()
-}
-
-type MultiNotifier struct {
-	clientListeners []DataChangeNotifier
-}
-
-func NewMultiNotifier() *MultiNotifier {
-	return &MultiNotifier{clientListeners: []DataChangeNotifier{}}
-}
-
-func (p *MultiNotifier) AddClient(notifier DataChangeNotifier) {
-	p.clientListeners = append(p.clientListeners, notifier)
-}
-
-func (p *MultiNotifier) OnChange() {
-	for _, listener := range p.clientListeners {
-		listener.OnChange()
-	}
-}
 
 /*
 Interfaces are all a subset of the interfaces implemented in the Java client.
@@ -52,15 +14,15 @@ Should be fleshed out as necessary for use or testing.
 type Coordinator interface {
 	GetRingGroup(ringGroupName string) RingGroup
 
-	AddDomainGroup(ctx *ThreadCtx, name string) (DomainGroup, error)
+	AddDomainGroup(ctx *thriftext.ThreadCtx, name string) (DomainGroup, error)
 
 	GetDomainGroup(domainGroupName string) DomainGroup
 
 	GetRingGroups() []RingGroup
 
-	GetDomainById(ctx *ThreadCtx, domainId DomainID) (Domain, error)
+	GetDomainById(ctx *thriftext.ThreadCtx, domainId DomainID) (Domain, error)
 
-	AddDomain(ctx *ThreadCtx,
+	AddDomain(ctx *thriftext.ThreadCtx,
 		domainName string,
 		numParts int32,
 		storageEngineFactoryName string,
@@ -75,17 +37,17 @@ type Coordinator interface {
 type DomainGroup interface {
 	GetName() string
 
-	SetDomainVersions(ctx *ThreadCtx, flags map[DomainID]VersionID) error
+	SetDomainVersions(ctx *thriftext.ThreadCtx, flags map[DomainID]VersionID) error
 
-	GetDomainVersions(ctx *ThreadCtx) []*DomainAndVersion
+	GetDomainVersions(ctx *thriftext.ThreadCtx) []*DomainAndVersion
 
 	GetDomainVersion(domainID DomainID) *DomainAndVersion
 }
 
 type Ring interface {
-	AddHost(ctx *ThreadCtx, hostName string, port int, hostFlags []string) (Host, error)
+	AddHost(ctx *thriftext.ThreadCtx, hostName string, port int, hostFlags []string) (Host, error)
 
-	GetHosts(ctx *ThreadCtx) []Host
+	GetHosts(ctx *thriftext.ThreadCtx) []Host
 }
 
 type RingGroup interface {
@@ -93,15 +55,15 @@ type RingGroup interface {
 
 	GetRings() []Ring
 
-	AddRing(ctx *ThreadCtx, ringNum RingID) (Ring, error)
+	AddRing(ctx *thriftext.ThreadCtx, ringNum RingID) (Ring, error)
 
 	GetRing(ringNum RingID) Ring
 
-	RegisterClient(ctx *ThreadCtx, metadata *hank.ClientMetadata) error
+	RegisterClient(ctx *thriftext.ThreadCtx, metadata *hank.ClientMetadata) error
 
 	GetClients() []*hank.ClientMetadata
 
-	AddListener(listener DataChangeNotifier)
+	AddListener(listener thriftext.DataChangeNotifier)
 }
 
 type HostState string
@@ -114,23 +76,23 @@ const (
 )
 
 type Host interface {
-	GetMetadata(ctx *ThreadCtx) *hank.HostMetadata
+	GetMetadata(ctx *thriftext.ThreadCtx) *hank.HostMetadata
 
-	GetAssignedDomains(ctx *ThreadCtx) []HostDomain
+	GetAssignedDomains(ctx *thriftext.ThreadCtx) []HostDomain
 
-	GetEnvironmentFlags(ctx *ThreadCtx) map[string]string
+	GetEnvironmentFlags(ctx *thriftext.ThreadCtx) map[string]string
 
-	SetEnvironmentFlags(ctx *ThreadCtx, flags map[string]string) error
+	SetEnvironmentFlags(ctx *thriftext.ThreadCtx, flags map[string]string) error
 
-	AddDomain(ctx *ThreadCtx, domain Domain) (HostDomain, error)
+	AddDomain(ctx *thriftext.ThreadCtx, domain Domain) (HostDomain, error)
 
 	GetAddress() *PartitionServerAddress
 
-	GetHostDomain(ctx *ThreadCtx, domainId DomainID) HostDomain
+	GetHostDomain(ctx *thriftext.ThreadCtx, domainId DomainID) HostDomain
 
-	AddStateChangeListener(listener DataListener)
+	AddStateChangeListener(listener thriftext.DataListener)
 
-	SetState(ctx *ThreadCtx, state HostState) error
+	SetState(ctx *thriftext.ThreadCtx, state HostState) error
 
 	GetState() HostState
 
@@ -156,15 +118,15 @@ type HostDomainPartition interface {
 
 	GetCurrentDomainVersion() VersionID
 
-	SetCurrentDomainVersion(ctx *ThreadCtx, version VersionID) error
+	SetCurrentDomainVersion(ctx *thriftext.ThreadCtx, version VersionID) error
 
 	IsDeletable() bool
 }
 
 type HostDomain interface {
-	GetDomain(ctx *ThreadCtx, coordinator Coordinator) (Domain, error)
+	GetDomain(ctx *thriftext.ThreadCtx, coordinator Coordinator) (Domain, error)
 
-	AddPartition(ctx *ThreadCtx, partNum PartitionID) HostDomainPartition
+	AddPartition(ctx *thriftext.ThreadCtx, partNum PartitionID) HostDomainPartition
 
 	GetPartitions() []HostDomainPartition
 }

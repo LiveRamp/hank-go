@@ -10,12 +10,13 @@ import (
 	"testing"
 	"time"
 	"github.com/liveramp/hank-go-client/zk_coordinator"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 func TestSmartClient(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
-	ctx := iface.NewThreadCtx()
+	ctx := thriftext.NewThreadCtx()
 
 	coordinator, _ := zk_coordinator.NewZkCoordinator(client,
 		"/hank/domains",
@@ -54,7 +55,7 @@ func TestSmartClient(t *testing.T) {
 func TestIt(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
-	ctx := iface.NewThreadCtx()
+	ctx := thriftext.NewThreadCtx()
 
 	coord, _ := zk_coordinator.NewZkCoordinator(client,
 		"/hank/domains",
@@ -243,7 +244,7 @@ func TestIt(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
-func setStateBlocking(t *testing.T, host iface.Host, ctx *iface.ThreadCtx, state iface.HostState) {
+func setStateBlocking(t *testing.T, host iface.Host, ctx *thriftext.ThreadCtx, state iface.HostState) {
 	host.SetState(ctx, state)
 	fixtures.WaitUntilOrFail(t, func() bool {
 		return host.GetState() == state

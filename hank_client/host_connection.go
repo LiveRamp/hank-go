@@ -8,6 +8,7 @@ import (
 	"time"
 	"github.com/liveramp/hank-go-client/syncext"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 type HostConnection struct {
@@ -22,7 +23,7 @@ type HostConnection struct {
 	socket *thrift.TSocket
 	client *hank.PartitionServerClient
 
-	ctx *iface.ThreadCtx
+	ctx *thriftext.ThreadCtx
 
 	lock *syncext.TimeoutMutex
 }

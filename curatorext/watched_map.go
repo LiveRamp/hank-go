@@ -2,13 +2,13 @@ package curatorext
 
 import (
 	"fmt"
-	"github.com/liveramp/hank-go-client/iface"
 	"github.com/curator-go/curator"
 	"github.com/curator-go/curator/recipes/cache"
 	"path"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
-type Loader func(ctx *iface.ThreadCtx, client curator.CuratorFramework, listener iface.DataChangeNotifier, path string) (interface{}, error)
+type Loader func(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error)
 
 type ZkWatchedMap struct {
 	Root string
@@ -17,16 +17,16 @@ type ZkWatchedMap struct {
 	client       curator.CuratorFramework
 	loader       Loader
 	internalData map[string]interface{}
-	listener     []iface.DataChangeNotifier
+	listener     []thriftext.DataChangeNotifier
 }
 
 type ChildLoader struct {
 	internalData map[string]interface{}
 	loader       Loader
 	root         string
-	listener     iface.DataChangeNotifier
+	listener     thriftext.DataChangeNotifier
 
-	ctx *iface.ThreadCtx
+	ctx *thriftext.ThreadCtx
 }
 
 func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.TreeCacheEvent) error {
@@ -54,7 +54,7 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 	return nil
 }
 
-func conditionalInsert(ctx *iface.ThreadCtx, client curator.CuratorFramework, loader Loader, listener iface.DataChangeNotifier, internalData map[string]interface{}, fullChildPath string) error {
+func conditionalInsert(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, loader Loader, listener thriftext.DataChangeNotifier, internalData map[string]interface{}, fullChildPath string) error {
 
 	newKey := path.Base(fullChildPath)
 
@@ -73,7 +73,7 @@ func conditionalInsert(ctx *iface.ThreadCtx, client curator.CuratorFramework, lo
 func NewZkWatchedMap(
 	client curator.CuratorFramework,
 	root string,
-	listener iface.DataChangeNotifier,
+	listener thriftext.DataChangeNotifier,
 	loader Loader) (*ZkWatchedMap, error) {
 
 	internalData := make(map[string]interface{})
@@ -88,7 +88,7 @@ func NewZkWatchedMap(
 		internalData: internalData,
 		loader:       loader,
 		root:         root,
-		ctx:          iface.NewThreadCtx(),
+		ctx:          thriftext.NewThreadCtx(),
 		listener:     listener,
 	})
 
@@ -102,7 +102,7 @@ func NewZkWatchedMap(
 		return nil, err
 	}
 
-	ctx := iface.NewThreadCtx()
+	ctx := thriftext.NewThreadCtx()
 	for _, element := range initialChildren {
 		err := conditionalInsert(ctx, client, loader, listener, internalData, path.Join(root, element))
 		if err != nil {

@@ -10,14 +10,15 @@ import (
 	"strconv"
 	"github.com/liveramp/hank-go-client/zk_coordinator"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
-func createHostServer(t *testing.T, ctx *iface.ThreadCtx, client curator.CuratorFramework, i int, server hank.PartitionServer) (iface.Host, func()) {
+func createHostServer(t *testing.T, ctx *thriftext.ThreadCtx, client curator.CuratorFramework, i int, server hank.PartitionServer) (iface.Host, func()) {
 	host, _ := createHost(ctx, client, i)
 	return host, createServer(t, ctx, host, server)
 }
 
-func createServer(t *testing.T, ctx *iface.ThreadCtx, host iface.Host, server hank.PartitionServer)(func()){
+func createServer(t *testing.T, ctx *thriftext.ThreadCtx, host iface.Host, server hank.PartitionServer)(func()){
 	_, close := thrift_services.Serve(
 		server,
 		thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory()),
@@ -32,6 +33,6 @@ func createServer(t *testing.T, ctx *iface.ThreadCtx, host iface.Host, server ha
 	return close
 }
 
-func createHost(ctx *iface.ThreadCtx, client curator.CuratorFramework, i int) (iface.Host, error) {
-	return zk_coordinator.CreateZkHost(ctx, client, &iface.NoOp{}, "/hank/host/host"+strconv.Itoa(i), "127.0.0.1", 12345+i, []string{})
+func createHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, i int) (iface.Host, error) {
+	return zk_coordinator.CreateZkHost(ctx, client, &thriftext.NoOp{}, "/hank/host/host"+strconv.Itoa(i), "127.0.0.1", 12345+i, []string{})
 }

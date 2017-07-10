@@ -12,6 +12,7 @@ import (
 	"github.com/karlseguin/ccache"
 	"github.com/liveramp/hank-go-client/syncext"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 const NUM_STAT_SAMPLES = 3
@@ -87,7 +88,7 @@ func New(
 		return nil, err
 	}
 
-	ctx := iface.NewThreadCtx()
+	ctx := thriftext.NewThreadCtx()
 	registerErr := ringGroup.RegisterClient(ctx, metadata)
 
 	if registerErr != nil {
@@ -133,7 +134,7 @@ func (p *HankSmartClient) OnChange() {
 
 func (p *HankSmartClient) updateLoop(stopping *bool, listenerLock *syncext.SingleLockSemaphore) {
 
-	ctx := iface.NewThreadCtx()
+	ctx := thriftext.NewThreadCtx()
 
 	for true {
 		listenerLock.Read()
@@ -237,7 +238,7 @@ func GetClientMetadata() (*hank.ClientMetadata, error) {
 	return metadata, nil
 }
 
-func (p *HankSmartClient) updateConnectionCache(ctx *iface.ThreadCtx) {
+func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) {
 	fmt.Println("Loading Hank's smart client metadata cache and connections.")
 
 	newServerToConnections := make(map[string]*HostConnectionPool)
@@ -361,7 +362,7 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 
 }
 
-func (p *HankSmartClient) isPreferredHost(ctx *iface.ThreadCtx, host iface.Host) bool {
+func (p *HankSmartClient) isPreferredHost(ctx *thriftext.ThreadCtx, host iface.Host) bool {
 
 	fmt.Println("Environment flags for host ", host)
 
@@ -380,7 +381,7 @@ func (p *HankSmartClient) isPreferredHost(ctx *iface.ThreadCtx, host iface.Host)
 }
 
 func (p *HankSmartClient) buildNewConnectionCache(
-	ctx *iface.ThreadCtx,
+	ctx *thriftext.ThreadCtx,
 	newServerToConnections map[string]*HostConnectionPool,
 	newDomainToPartitionToConnections map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool) error {
 

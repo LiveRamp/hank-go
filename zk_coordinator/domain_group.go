@@ -6,6 +6,7 @@ import (
 	"github.com/liveramp/hank-go-client/iface"
 	"github.com/liveramp/hank-go-client/curatorext"
 	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 type ZkDomainGroup struct {
@@ -13,7 +14,7 @@ type ZkDomainGroup struct {
 	metadata *curatorext.ZkWatchedNode
 }
 
-func createZkDomainGroup(ctx *iface.ThreadCtx, client curator.CuratorFramework, name string, rootPath string) (*ZkDomainGroup, error) {
+func createZkDomainGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, name string, rootPath string) (*ZkDomainGroup, error) {
 
 	metadataPath := path.Join(rootPath, name)
 
@@ -41,7 +42,7 @@ func createZkDomainGroup(ctx *iface.ThreadCtx, client curator.CuratorFramework, 
 	return &ZkDomainGroup{name: name, metadata: node}, nil
 }
 
-func loadZkDomainGroup(ctx *iface.ThreadCtx, client curator.CuratorFramework, listener iface.DataChangeNotifier, fullPath string) (interface{}, error) {
+func loadZkDomainGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, fullPath string) (interface{}, error) {
 
 	name := path.Base(fullPath)
 
@@ -64,7 +65,7 @@ func (p *ZkDomainGroup) GetName() string {
 	return p.name
 }
 
-func (p *ZkDomainGroup) GetDomainVersions(ctx *iface.ThreadCtx) []*iface.DomainAndVersion {
+func (p *ZkDomainGroup) GetDomainVersions(ctx *thriftext.ThreadCtx) []*iface.DomainAndVersion {
 	metadata := iface.AsDomainGroupMetadata(p.metadata.Get())
 
 	versions := []*iface.DomainAndVersion{}
@@ -74,7 +75,7 @@ func (p *ZkDomainGroup) GetDomainVersions(ctx *iface.ThreadCtx) []*iface.DomainA
 	return versions
 }
 
-func (p *ZkDomainGroup) SetDomainVersions(ctx *iface.ThreadCtx, versions map[iface.DomainID]iface.VersionID) error {
+func (p *ZkDomainGroup) SetDomainVersions(ctx *thriftext.ThreadCtx, versions map[iface.DomainID]iface.VersionID) error {
 
 	_, err := p.metadata.Update(ctx, func(val interface{}) interface{} {
 		metadata := iface.AsDomainGroupMetadata(val)

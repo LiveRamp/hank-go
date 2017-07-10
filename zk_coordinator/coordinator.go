@@ -5,6 +5,7 @@ import (
 	"path"
 	"github.com/liveramp/hank-go-client/iface"
 	"github.com/liveramp/hank-go-client/curatorext"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 const KEY_DOMAIN_ID_COUNTER string = ".domain_id_counter"
@@ -23,9 +24,9 @@ func NewZkCoordinator(client curator.CuratorFramework,
 	ringGroupsRoot string,
 	domainGroupsRoot string) (*ZkCoordinator, error) {
 
-	ringGroups, rgError := curatorext.NewZkWatchedMap(client, ringGroupsRoot, iface.NewMultiNotifier(), loadZkRingGroup)
-	domainGroups, dgError := curatorext.NewZkWatchedMap(client, domainGroupsRoot, iface.NewMultiNotifier(), loadZkDomainGroup)
-	domains, dmError := curatorext.NewZkWatchedMap(client, domainsRoot, iface.NewMultiNotifier(), loadZkDomain)
+	ringGroups, rgError := curatorext.NewZkWatchedMap(client, ringGroupsRoot, thriftext.NewMultiNotifier(), loadZkRingGroup)
+	domainGroups, dgError := curatorext.NewZkWatchedMap(client, domainGroupsRoot, thriftext.NewMultiNotifier(), loadZkDomainGroup)
+	domains, dmError := curatorext.NewZkWatchedMap(client, domainsRoot, thriftext.NewMultiNotifier(), loadZkDomain)
 
 	if rgError != nil {
 		return nil, rgError
@@ -87,7 +88,7 @@ func (p *ZkCoordinator) GetDomainGroup(name string) iface.DomainGroup {
 	return iface.AsDomainGroup(p.domainGroups.Get(name))
 }
 
-func (p *ZkCoordinator) AddDomainGroup(ctx *iface.ThreadCtx, name string) (iface.DomainGroup, error) {
+func (p *ZkCoordinator) AddDomainGroup(ctx *thriftext.ThreadCtx, name string) (iface.DomainGroup, error) {
 
 	group, err := createZkDomainGroup(ctx, p.client, name, p.domainGroups.Root)
 	if err != nil {
@@ -103,7 +104,7 @@ func (p *ZkCoordinator) AddDomainGroup(ctx *iface.ThreadCtx, name string) (iface
 
 }
 
-func (p *ZkCoordinator) AddRingGroup(ctx *iface.ThreadCtx, name string) (iface.RingGroup, error) {
+func (p *ZkCoordinator) AddRingGroup(ctx *thriftext.ThreadCtx, name string) (iface.RingGroup, error) {
 
 	group, err := createZkRingGroup(ctx, p.client, name, p.ringGroups.Root)
 	if err != nil {
@@ -118,7 +119,7 @@ func (p *ZkCoordinator) AddRingGroup(ctx *iface.ThreadCtx, name string) (iface.R
 	return group, nil
 }
 
-func (p *ZkCoordinator) AddDomain(ctx *iface.ThreadCtx,
+func (p *ZkCoordinator) AddDomain(ctx *thriftext.ThreadCtx,
 	domainName string,
 	numParts int32,
 	storageEngineFactoryName string,
@@ -150,7 +151,7 @@ func (p *ZkCoordinator) AddDomain(ctx *iface.ThreadCtx,
 	return domain, nil
 }
 
-func (p *ZkCoordinator) getNextDomainID(ctx *iface.ThreadCtx) (iface.DomainID, error) {
+func (p *ZkCoordinator) getNextDomainID(ctx *thriftext.ThreadCtx) (iface.DomainID, error) {
 
 	val, error := p.domainIDCounter.Update(ctx, func(val interface{}) interface{} {
 		nextID := val.(int)
@@ -165,7 +166,7 @@ func (p *ZkCoordinator) getNextDomainID(ctx *iface.ThreadCtx) (iface.DomainID, e
 
 }
 
-func (p *ZkCoordinator) GetDomainById(ctx *iface.ThreadCtx, domainId iface.DomainID) (iface.Domain, error) {
+func (p *ZkCoordinator) GetDomainById(ctx *thriftext.ThreadCtx, domainId iface.DomainID) (iface.Domain, error) {
 
 	for _, inst := range p.domains.Values() {
 		domain := inst.(iface.Domain)

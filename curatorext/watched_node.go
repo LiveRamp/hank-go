@@ -8,21 +8,21 @@ import (
 	"github.com/curator-go/curator/recipes/cache"
 	"github.com/samuel/go-zookeeper/zk"
 	"time"
-	"github.com/liveramp/hank-go-client/iface"
+	"github.com/liveramp/hank-go-client/thriftext"
 )
 
 type Constructor func() interface{}
 
-type Deserializer func(ctx *iface.ThreadCtx, raw []byte, constructor Constructor) (interface{}, error)
-type Serializer func(ctx *iface.ThreadCtx, val interface{}) ([]byte, error)
+type Deserializer func(ctx *thriftext.ThreadCtx, raw []byte, constructor Constructor) (interface{}, error)
+type Serializer func(ctx *thriftext.ThreadCtx, val interface{}) ([]byte, error)
 
 type ZkWatchedNode struct {
 	node        *cache.TreeCache
 	client      curator.CuratorFramework
 	path        string
 	constructor Constructor
-	ctx         *iface.ThreadCtx
-	listeners   []iface.DataListener
+	ctx         *thriftext.ThreadCtx
+	listeners   []thriftext.DataListener
 
 	serializer   Serializer
 	deserializer Deserializer
@@ -96,9 +96,9 @@ func NewZkWatchedNode(
 func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor Constructor, serializer Serializer, deserializer Deserializer) (*ZkWatchedNode, error) {
 
 	//  TODO we might need a pool of these -- evaluate in production.  in a more civilized world, we'd just use a ThreadLocal
-	ctx := iface.NewThreadCtx()
+	ctx := thriftext.NewThreadCtx()
 
-	watchedNode := &ZkWatchedNode{client: client, path: path, constructor: constructor, ctx: ctx, listeners: []iface.DataListener{}, serializer: serializer, deserializer: deserializer}
+	watchedNode := &ZkWatchedNode{client: client, path: path, constructor: constructor, ctx: ctx, listeners: []thriftext.DataListener{}, serializer: serializer, deserializer: deserializer}
 
 	node := cache.NewTreeCache(client, path, cache.DefaultTreeCacheSelector).
 		SetMaxDepth(0).
@@ -134,7 +134,7 @@ func (p *ZkWatchedNode) Get() interface{} {
 	return p.value
 }
 
-func (p *ZkWatchedNode) Set(ctx *iface.ThreadCtx,
+func (p *ZkWatchedNode) Set(ctx *thriftext.ThreadCtx,
 	value interface{}) error {
 
 	bytes, err := p.serializer(ctx, value)
@@ -146,14 +146,14 @@ func (p *ZkWatchedNode) Set(ctx *iface.ThreadCtx,
 	return err
 }
 
-func (p *ZkWatchedNode) AddListener(listener iface.DataListener) {
+func (p *ZkWatchedNode) AddListener(listener thriftext.DataListener) {
 	p.listeners = append(p.listeners, listener)
 }
 
 // Note: update() should not modify its argument
 type Updater func(interface{}) interface{}
 
-func (p *ZkWatchedNode) Update(ctx *iface.ThreadCtx, updater Updater) (interface{}, error) {
+func (p *ZkWatchedNode) Update(ctx *thriftext.ThreadCtx, updater Updater) (interface{}, error) {
 
 	backoffStrat := backoff.NewExponentialBackOff()
 	backoffStrat.MaxElapsedTime = time.Second * 10
