@@ -1,13 +1,13 @@
 package curatorext
 
 import (
-	"github.com/liveramp/hank-go-client/fixtures"
+	"github.com/LiveRamp/hank-go-client/fixtures"
 	"time"
 	"path"
 	"reflect"
 	"github.com/curator-go/curator"
 	"testing"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 func LoadString(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error) {

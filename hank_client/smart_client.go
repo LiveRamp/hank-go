@@ -3,16 +3,16 @@ package hank_client
 import (
 	"errors"
 	"fmt"
-	"github.com/liveramp/hank-go-client/iface"
+	"github.com/LiveRamp/hank-go-client/iface"
 	"math"
 	"os"
 	"strconv"
 	"sync"
 	"time"
 	"github.com/karlseguin/ccache"
-	"github.com/liveramp/hank-go-client/syncext"
-	"github.com/liveramp/hank/hank-core/src/main/go/hank"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/syncext"
+	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 const NUM_STAT_SAMPLES = 3

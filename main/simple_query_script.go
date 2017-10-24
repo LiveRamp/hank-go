@@ -4,14 +4,14 @@ import (
 	"bufio"
 	"encoding/hex"
 	"fmt"
-	"github.com/liveramp/hank-go-client/iface"
-	"github.com/liveramp/hank-go-client/zk_coordinator"
+	"github.com/LiveRamp/hank-go-client/iface"
+	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 	"github.com/curator-go/curator"
 	"log"
 	"os"
 	"strings"
 	"time"
-	"github.com/liveramp/hank-go-client/hank_client"
+	"github.com/LiveRamp/hank-go-client/hank_client"
 )
 
 func main() {
