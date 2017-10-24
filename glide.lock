@@ -1,5 +1,5 @@
-hash: 224175b3e854ea42c41d9b5b4f80112b45eb71a3cef7924cde72118056ca7231
-updated: 2017-07-07T09:58:14.59621061-07:00
+hash: 16c5c11448f7c1ebe39a94f3342d5a3912fcfd35142b501a6ff34d1406acd91c
+updated: 2017-10-24T19:16:51.956257732-04:00
 imports:
 - name: git.apache.org/thrift.git
   version: e41e47c2b4b2407bac525d203b281c63fb253978
@@ -23,7 +23,7 @@ imports:
   version: 0a025b7e63adc15a622f29b0b2c4c3848243bbf6
 - name: github.com/karlseguin/ccache
   version: a2d62155777b39595c825ed3824279e642a5db3c
-- name: github.com/liveramp/hank
+- name: github.com/LiveRamp/hank
   version: 02714809b158733750feab238985b1713b7b22e1
   subpackages:
   - hank-core/src/main/go/hank
