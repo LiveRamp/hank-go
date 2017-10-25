@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"sync"
-	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 )
 
 type MapPartitionServerHandler struct {

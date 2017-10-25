@@ -3,16 +3,16 @@ package hank_client
 import (
 	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/liveramp/hank-go-client/fixtures"
-	"github.com/liveramp/hank-go-client/iface"
-	"github.com/liveramp/hank-go-client/thrift_services"
+	"github.com/LiveRamp/hank-go-client/fixtures"
+	"github.com/LiveRamp/hank-go-client/iface"
+	"github.com/LiveRamp/hank-go-client/thrift_services"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 	"time"
-	"github.com/liveramp/hank-go-client/zk_coordinator"
-	"github.com/liveramp/hank/hank-core/src/main/go/hank"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 func TestQueryWhenServing(t *testing.T) {

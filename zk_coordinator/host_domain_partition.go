@@ -1,8 +1,8 @@
 package zk_coordinator
 
 import (
-  "github.com/liveramp/hank-go-client/iface"
-  "github.com/liveramp/hank-go-client/thriftext"
+  "github.com/LiveRamp/hank-go-client/iface"
+  "github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 type ZkHostDomainPartition struct {

@@ -2,13 +2,13 @@ package curatorext
 
 import (
 	"reflect"
-	"github.com/liveramp/hank-go-client/fixtures"
+	"github.com/LiveRamp/hank-go-client/fixtures"
 	"github.com/curator-go/curator"
 	"fmt"
 	"time"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 func TestZkWatchedNode(t *testing.T) {

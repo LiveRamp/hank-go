@@ -4,10 +4,10 @@ import (
 	"github.com/curator-go/curator"
 	"path"
 	"strconv"
-	"github.com/liveramp/hank-go-client/iface"
-	"github.com/liveramp/hank-go-client/curatorext"
-	"github.com/liveramp/hank/hank-core/src/main/go/hank"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/iface"
+	"github.com/LiveRamp/hank-go-client/curatorext"
+	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 const CLIENT_ROOT string = "c"

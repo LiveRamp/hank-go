@@ -8,7 +8,7 @@ import (
 	"github.com/curator-go/curator/recipes/cache"
 	"github.com/samuel/go-zookeeper/zk"
 	"time"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 type Constructor func() interface{}

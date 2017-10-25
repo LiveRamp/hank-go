@@ -2,15 +2,15 @@ package hank_client
 
 import (
 	"fmt"
-	"github.com/liveramp/hank-go-client/fixtures"
-	"github.com/liveramp/hank-go-client/iface"
-	"github.com/liveramp/hank-go-client/thrift_services"
+	"github.com/LiveRamp/hank-go-client/fixtures"
+	"github.com/LiveRamp/hank-go-client/iface"
+	"github.com/LiveRamp/hank-go-client/thrift_services"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 	"time"
-	"github.com/liveramp/hank-go-client/zk_coordinator"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 func TestSmartClient(t *testing.T) {

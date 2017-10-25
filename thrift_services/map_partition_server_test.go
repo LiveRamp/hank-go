@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 )
 
 const PARTITION_SERVER_ADDRESS = "127.0.0.1:56783"

@@ -3,7 +3,7 @@ package syncext
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
-	"github.com/liveramp/hank-go-client/fixtures"
+	"github.com/LiveRamp/hank-go-client/fixtures"
 )
 
 func TestLock(t *testing.T) {

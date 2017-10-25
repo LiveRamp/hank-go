@@ -9,7 +9,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"time"
 	"fmt"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 

@@ -4,7 +4,7 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/curator-go/curator"
 	"strconv"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 //  thrift

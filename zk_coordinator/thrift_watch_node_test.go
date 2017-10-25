@@ -1,13 +1,13 @@
 package zk_coordinator
 
 import (
-	"github.com/liveramp/hank-go-client/fixtures"
-	"github.com/liveramp/hank/hank-core/src/main/go/hank"
+	"github.com/LiveRamp/hank-go-client/fixtures"
+	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 	"github.com/curator-go/curator"
-	"github.com/liveramp/hank-go-client/iface"
+	"github.com/LiveRamp/hank-go-client/iface"
 	"testing"
-	"github.com/liveramp/hank-go-client/curatorext"
-	"github.com/liveramp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/curatorext"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 //	TODO get some non-hank dummy thrift types and test this in the curatorext package
