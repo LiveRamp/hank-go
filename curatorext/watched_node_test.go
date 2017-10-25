@@ -1,13 +1,15 @@
 package curatorext
 
 import (
-	"reflect"
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/curator-go/curator"
 	"fmt"
-	"time"
-	"github.com/stretchr/testify/assert"
+	"reflect"
 	"testing"
+	"time"
+
+	"github.com/curator-go/curator"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/LiveRamp/hank-go-client/fixtures"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 

@@ -2,6 +2,7 @@ package thriftext
 
 import (
 	"sync"
+
 	"git.apache.org/thrift.git/lib/go/thrift"
 )
 
@@ -14,7 +15,7 @@ type ThreadCtx struct {
 }
 
 func NewThreadCtx() *ThreadCtx {
-	
+
 	serializer := thrift.NewTSerializer()
 	serializer.Protocol = thrift.NewTCompactProtocol(serializer.Transport)
 

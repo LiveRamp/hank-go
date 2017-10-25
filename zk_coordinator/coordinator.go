@@ -1,10 +1,12 @@
 package zk_coordinator
 
 import (
-	"github.com/curator-go/curator"
 	"path"
-	"github.com/LiveRamp/hank-go-client/iface"
+
+	"github.com/curator-go/curator"
+
 	"github.com/LiveRamp/hank-go-client/curatorext"
+	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
@@ -96,7 +98,7 @@ func (p *ZkCoordinator) AddDomainGroup(ctx *thriftext.ThreadCtx, name string) (i
 	}
 
 	err = p.domainGroups.WaitUntilContains(name)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -112,7 +114,7 @@ func (p *ZkCoordinator) AddRingGroup(ctx *thriftext.ThreadCtx, name string) (ifa
 	}
 
 	err = p.ringGroups.WaitUntilContains(name)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -144,7 +146,7 @@ func (p *ZkCoordinator) AddDomain(ctx *thriftext.ThreadCtx,
 	}
 
 	err = p.domains.WaitUntilContains(domainName)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -178,6 +180,6 @@ func (p *ZkCoordinator) GetDomainById(ctx *thriftext.ThreadCtx, domainId iface.D
 	return nil, nil
 }
 
-func (p *ZkCoordinator) GetDomain(domain string) (iface.Domain) {
+func (p *ZkCoordinator) GetDomain(domain string) iface.Domain {
 	return iface.AsDomain(p.domains.Get(domain))
 }

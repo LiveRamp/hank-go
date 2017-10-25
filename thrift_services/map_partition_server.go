@@ -2,8 +2,9 @@ package thrift_services
 
 import (
 	"fmt"
-	"git.apache.org/thrift.git/lib/go/thrift"
 	"sync"
+
+	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 )
 

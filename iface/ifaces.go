@@ -2,14 +2,16 @@ package iface
 
 import (
 	"strconv"
+
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 /*
 Interfaces are all a subset of the interfaces implemented in the Java client.
 Should be fleshed out as necessary for use or testing.
- */
+*/
 
 type Coordinator interface {
 	GetRingGroup(ringGroupName string) RingGroup

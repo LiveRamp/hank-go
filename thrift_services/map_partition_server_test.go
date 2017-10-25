@@ -1,11 +1,12 @@
 package thrift_services
 
 import (
-	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+	"github.com/stretchr/testify/assert"
 )
 
 const PARTITION_SERVER_ADDRESS = "127.0.0.1:56783"
@@ -31,14 +32,12 @@ func TestMapPartitionServer(t *testing.T) {
 		thrift.NewTCompactProtocolFactory(),
 		PARTITION_SERVER_ADDRESS)
 
-
 	time.Sleep(time.Second)
 
 	var transport, _ = thrift.NewTSocket(PARTITION_SERVER_ADDRESS)
 	transport.Open()
 
 	framed := thrift.NewTFramedTransportMaxLength(transport, 16384000)
-
 
 	client := hank.NewPartitionServerClientFactory(
 		framed,

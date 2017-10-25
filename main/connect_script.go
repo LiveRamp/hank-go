@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/curator-go/curator"
 	"os"
 	"time"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+
+	"github.com/curator-go/curator"
+
 	"github.com/LiveRamp/hank-go-client/hank_client"
+	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 )
 
 func main() {

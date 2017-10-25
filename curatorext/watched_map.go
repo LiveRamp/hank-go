@@ -2,9 +2,11 @@ package curatorext
 
 import (
 	"fmt"
+	"path"
+
 	"github.com/curator-go/curator"
 	"github.com/curator-go/curator/recipes/cache"
-	"path"
+
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 

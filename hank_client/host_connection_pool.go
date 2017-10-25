@@ -4,12 +4,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/LiveRamp/hank-go-client/iface"
 	"math/rand"
 	"sort"
 	"sync"
 	"time"
+
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+
+	"github.com/LiveRamp/hank-go-client/iface"
 )
 
 const NO_HASH = -1
@@ -30,7 +32,7 @@ type HostConnectionPool struct {
 	otherPools     *ConnectionSet
 
 	incrementLock *sync.Mutex
-	random *rand.Rand
+	random        *rand.Rand
 }
 
 func CreateHostConnectionPool(connections []*HostConnection, hostShuffleSeed int64, preferredHosts []string) (*HostConnectionPool, error) {
@@ -395,13 +397,12 @@ func (p *HostConnectionPool) GetConnections() []*HostConnection {
 	return all
 }
 
-
-func (p *HostConnectionPool) GetConnectionLoad() (numConnections int64, numLockedConnections int64){
+func (p *HostConnectionPool) GetConnectionLoad() (numConnections int64, numLockedConnections int64) {
 
 	numConnections = 0
 	numLockedConnections = 0
 
-	for _,conns := range p.preferredPools.connections {
+	for _, conns := range p.preferredPools.connections {
 		for _, conn := range conns {
 			if conn.connection.lock.TestIsLocked() {
 				numLockedConnections++
@@ -410,7 +411,7 @@ func (p *HostConnectionPool) GetConnectionLoad() (numConnections int64, numLocke
 		}
 	}
 
-	for _,conns := range p.otherPools.connections {
+	for _, conns := range p.otherPools.connections {
 		for _, conn := range conns {
 			if conn.connection.lock.TestIsLocked() {
 				numLockedConnections++

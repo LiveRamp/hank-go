@@ -1,9 +1,11 @@
 package curatorext
 
 import (
+	"strconv"
+
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/curator-go/curator"
-	"strconv"
+
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
@@ -91,11 +93,11 @@ func NewIntWatchedNode(client curator.CuratorFramework, mode curator.CreateMode,
 
 //	string
 
-func StringSerializer(ctx *thriftext.ThreadCtx, val interface{}) ([]byte, error){
+func StringSerializer(ctx *thriftext.ThreadCtx, val interface{}) ([]byte, error) {
 	return []byte(val.(string)), nil
 }
 
-func StringDeserializer(ctx *thriftext.ThreadCtx, raw []byte, constructor Constructor) (interface{}, error){
+func StringDeserializer(ctx *thriftext.ThreadCtx, raw []byte, constructor Constructor) (interface{}, error) {
 	return string(raw), nil
 }
 

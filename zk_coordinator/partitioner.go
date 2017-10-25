@@ -8,7 +8,7 @@ type Murmur64Partitioner struct{}
 
 const SEED = 645568
 
-func abs64(val int64) int64{
+func abs64(val int64) int64 {
 	if val < 0 {
 		return -val
 	}

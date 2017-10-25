@@ -3,15 +3,17 @@ package hank_client
 import (
 	"errors"
 	"fmt"
-	"github.com/LiveRamp/hank-go-client/iface"
 	"math"
 	"os"
 	"strconv"
 	"sync"
 	"time"
-	"github.com/karlseguin/ccache"
-	"github.com/LiveRamp/hank-go-client/syncext"
+
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+	"github.com/karlseguin/ccache"
+
+	"github.com/LiveRamp/hank-go-client/iface"
+	"github.com/LiveRamp/hank-go-client/syncext"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
@@ -37,8 +39,8 @@ func NewRequestCounters() *RequestCounters {
 func (p *RequestCounters) increment(requests int64, cacheHits int64) {
 	p.lock.Lock()
 
-	p.requests+=requests
-	p.cacheHits+=cacheHits
+	p.requests += requests
+	p.cacheHits += cacheHits
 
 	p.lock.Unlock()
 }
@@ -106,16 +108,16 @@ func New(
 	stopping := false
 
 	client := &HankSmartClient{coordinator,
-														 ringGroup,
-														 options,
-														 make(map[string]*iface.PartitionServerAddress),
-														 make(map[string]*HostConnectionPool),
-														 make(map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool),
-														 &sync.Mutex{},
-														 &stopping,
-														 cache,
-														 NewRequestCounters(),
-														 connectionCacheLock,
+		ringGroup,
+		options,
+		make(map[string]*iface.PartitionServerAddress),
+		make(map[string]*HostConnectionPool),
+		make(map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool),
+		&sync.Mutex{},
+		&stopping,
+		cache,
+		NewRequestCounters(),
+		connectionCacheLock,
 	}
 
 	client.updateConnectionCache(ctx)

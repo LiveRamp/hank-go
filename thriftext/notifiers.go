@@ -1,6 +1,5 @@
 package thriftext
 
-
 type DataListener interface {
 	OnDataChange(newVal interface{})
 }

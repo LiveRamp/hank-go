@@ -2,12 +2,14 @@ package zk_coordinator
 
 import (
 	"fmt"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/curator-go/curator"
 	"path"
 	"regexp"
 	"strconv"
+
+	"github.com/curator-go/curator"
+
 	"github.com/LiveRamp/hank-go-client/curatorext"
+	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 

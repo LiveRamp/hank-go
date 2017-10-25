@@ -2,7 +2,9 @@ package syncext
 
 import (
 	"testing"
+
 	"github.com/stretchr/testify/assert"
+
 	"github.com/LiveRamp/hank-go-client/fixtures"
 )
 
@@ -25,7 +27,7 @@ func TestLock(t *testing.T) {
 	assert.False(t, read)
 	sem.Release()
 
-	fixtures.WaitUntilOrFail(t, func()bool {
+	fixtures.WaitUntilOrFail(t, func() bool {
 		return read
 	})
 
