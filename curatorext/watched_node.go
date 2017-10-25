@@ -3,11 +3,13 @@ package curatorext
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/cenkalti/backoff"
 	"github.com/curator-go/curator"
 	"github.com/curator-go/curator/recipes/cache"
 	"github.com/samuel/go-zookeeper/zk"
-	"time"
+
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 

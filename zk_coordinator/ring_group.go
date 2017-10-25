@@ -1,12 +1,14 @@
 package zk_coordinator
 
 import (
-	"github.com/curator-go/curator"
 	"path"
 	"strconv"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/curatorext"
+
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+	"github.com/curator-go/curator"
+
+	"github.com/LiveRamp/hank-go-client/curatorext"
+	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
@@ -117,7 +119,7 @@ func (p *ZkRingGroup) AddRing(ctx *thriftext.ThreadCtx, ringNum iface.RingID) (i
 	}
 
 	err = p.rings.WaitUntilContains(ringChild)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 

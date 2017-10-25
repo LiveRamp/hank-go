@@ -2,16 +2,17 @@ package curatorext
 
 import (
 	"errors"
-	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/curator-go/curator"
+	"fmt"
 	"path"
 	"path/filepath"
-	"github.com/cenkalti/backoff"
 	"time"
-	"fmt"
+
+	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/cenkalti/backoff"
+	"github.com/curator-go/curator"
+
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
-
 
 func WaitUntilOrErr(expectTrue func() bool) error {
 

@@ -17,8 +17,8 @@ type hankSmartClientOptions struct {
 	PreferredHostEnvironment     *EnvironmentValue
 	QueryMaxNumTries             int32
 
-	ResponseCacheEnabled  bool
-	ResponseCacheNumItems int32
+	ResponseCacheEnabled    bool
+	ResponseCacheNumItems   int32
 	ResponseCacheExpiryTime time.Duration
 }
 

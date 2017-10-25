@@ -2,15 +2,17 @@ package hank_client
 
 import (
 	"fmt"
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/curator-go/curator"
-	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+	"github.com/curator-go/curator"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/LiveRamp/hank-go-client/fixtures"
+	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 )
 
 func Exception() *hank.HankResponse {

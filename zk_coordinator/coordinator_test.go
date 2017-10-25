@@ -2,11 +2,13 @@ package zk_coordinator
 
 import (
 	"fmt"
-	"github.com/curator-go/curator"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/curator-go/curator"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/LiveRamp/hank-go-client/fixtures"
 	"github.com/LiveRamp/hank-go-client/iface"
 )

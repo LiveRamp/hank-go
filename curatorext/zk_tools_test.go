@@ -1,10 +1,12 @@
 package curatorext
 
 import (
-	"github.com/LiveRamp/hank-go-client/fixtures"
+	"testing"
+
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
-	"testing"
+
+	"github.com/LiveRamp/hank-go-client/fixtures"
 )
 
 /*

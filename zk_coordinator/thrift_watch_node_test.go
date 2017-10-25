@@ -1,12 +1,14 @@
 package zk_coordinator
 
 import (
-	"github.com/LiveRamp/hank-go-client/fixtures"
+	"testing"
+
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 	"github.com/curator-go/curator"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"testing"
+
 	"github.com/LiveRamp/hank-go-client/curatorext"
+	"github.com/LiveRamp/hank-go-client/fixtures"
+	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 

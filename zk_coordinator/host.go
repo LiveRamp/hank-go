@@ -1,16 +1,18 @@
 package zk_coordinator
 
 import (
-	"github.com/curator-go/curator"
-	"path"
-	"strings"
-	"github.com/LiveRamp/hank-go-client/iface"
 	"fmt"
-	"github.com/satori/go.uuid"
 	"math/big"
+	"path"
 	"strconv"
-	"github.com/LiveRamp/hank-go-client/curatorext"
+	"strings"
+
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+	"github.com/curator-go/curator"
+	"github.com/satori/go.uuid"
+
+	"github.com/LiveRamp/hank-go-client/curatorext"
+	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
@@ -72,7 +74,6 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 		string(iface.HOST_OFFLINE))
 	state.AddListener(adapter)
 
-
 	if err != nil {
 		fmt.Println("Error creating state node at path: ", statePath, err)
 		return nil, err
@@ -107,11 +108,9 @@ func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, liste
 	return &ZkHost{rootPath, node, assignments, state, listener}, nil
 }
 
-
 func assignmentsRoot(rootPath string) string {
 	return path.Join(rootPath, ASSIGNMENTS_PATH)
 }
-
 
 func (p *ZkHost) addPartition(ctx *thriftext.ThreadCtx, domainId iface.DomainID, partNum iface.PartitionID) iface.HostDomainPartition {
 
@@ -196,7 +195,7 @@ func (p *ZkHost) getPartitions(domainId iface.DomainID) []iface.HostDomainPartit
 
 //  public
 
-func (p  *ZkHost) GetID() string {
+func (p *ZkHost) GetID() string {
 	return path.Base(p.path)
 }
 

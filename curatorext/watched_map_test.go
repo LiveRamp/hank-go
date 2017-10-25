@@ -1,12 +1,14 @@
 package curatorext
 
 import (
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"time"
 	"path"
 	"reflect"
-	"github.com/curator-go/curator"
 	"testing"
+	"time"
+
+	"github.com/curator-go/curator"
+
+	"github.com/LiveRamp/hank-go-client/fixtures"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
@@ -48,4 +50,3 @@ func TestZkWatchedMap(t *testing.T) {
 
 	fixtures.TeardownZookeeper(cluster, client)
 }
-

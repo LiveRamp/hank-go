@@ -2,17 +2,19 @@ package hank_client
 
 import (
 	"fmt"
-	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thrift_services"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 	"time"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+
+	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/LiveRamp/hank-go-client/fixtures"
+	"github.com/LiveRamp/hank-go-client/iface"
+	"github.com/LiveRamp/hank-go-client/thrift_services"
 	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 )
 
 func TestQueryWhenServing(t *testing.T) {
@@ -45,7 +47,7 @@ func TestQueryWhenServing(t *testing.T) {
 		return host.GetState() == iface.HOST_IDLE
 	})
 
-	conn  := NewHostConnection(host, 100, 100, 100, 100)
+	conn := NewHostConnection(host, 100, 100, 100, 100)
 	_, idleGetErr := conn.Get(0, []byte("key1"), false)
 
 	assert.Equal(t, "Connection to host is not available (host is not serving).", idleGetErr.Error())
@@ -82,7 +84,7 @@ func TestTimeouts(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
 	ctx := thriftext.NewThreadCtx()
-	host, err := zk_coordinator.CreateZkHost(ctx, client, &thriftext.NoOp{},"/hank/host/host1", "127.0.0.1", 12345, []string{})
+	host, err := zk_coordinator.CreateZkHost(ctx, client, &thriftext.NoOp{}, "/hank/host/host1", "127.0.0.1", 12345, []string{})
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()

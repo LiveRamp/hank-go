@@ -3,13 +3,14 @@ package fixtures
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"testing"
+	"time"
+
 	"github.com/cenkalti/backoff"
 	"github.com/curator-go/curator"
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
-	"strconv"
-	"testing"
-	"time"
 )
 
 func WaitUntilOrFail(t *testing.T, expectTrue func() bool) error {
