@@ -14,6 +14,7 @@ import (
 	"github.com/LiveRamp/hank-go-client/hank_client"
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	"github.com/LiveRamp/hank-go-client/thriftext"
 )
 
 func main() {
@@ -22,7 +23,7 @@ func main() {
 	client := curator.NewClient(argsWithoutProg[0], curator.NewRetryNTimes(1, time.Second))
 	client.Start()
 
-	ctx := curatorext.NewThreadCtx()
+	ctx := thriftext.NewThreadCtx()
 
 	coordinator, coordErr := zk_coordinator.NewZkCoordinator(client, "/hank/domains", "/hank/ring_groups", "/hank/domain_groups")
 	if coordErr != nil {
