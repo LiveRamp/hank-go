@@ -51,7 +51,9 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 		}
 	case cache.TreeCacheEventNodeRemoved:
 		fullChildPath := event.Data.Path()
+		p.lock.Lock()
 		delete(p.internalData, path.Base(fullChildPath))
+		p.lock.Unlock()
 		p.listener.OnChange()
 	}
 
