@@ -13,9 +13,6 @@ import:
 - package: github.com/stretchr/testify
   subpackages:
   - assert
-- package: go4.org
-  subpackages:
-  - syncutil/singleflight
 - package: golang.org/x/crypto
   subpackages:
   - acme/autocert
