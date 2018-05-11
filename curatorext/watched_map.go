@@ -8,6 +8,7 @@ import (
 	"github.com/curator-go/curator/recipes/cache"
 
 	"github.com/LiveRamp/hank-go-client/thriftext"
+	"sync"
 )
 
 type Loader func(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error)
@@ -27,6 +28,7 @@ type ChildLoader struct {
 	loader       Loader
 	root         string
 	listener     thriftext.DataChangeNotifier
+	lock         *sync.Mutex
 
 	ctx *thriftext.ThreadCtx
 }
@@ -40,7 +42,7 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 		fullChildPath := event.Data.Path()
 
 		if IsSubdirectory(p.root, fullChildPath) {
-			err := conditionalInsert(p.ctx, client, p.loader, p.listener, p.internalData, fullChildPath)
+			err := conditionalInsert(p.ctx, client, p.loader, p.listener, p.lock, p.internalData, fullChildPath)
 			p.listener.OnChange()
 			if err != nil {
 				fmt.Println("Error inserting child: ", err)
@@ -56,7 +58,7 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 	return nil
 }
 
-func conditionalInsert(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, loader Loader, listener thriftext.DataChangeNotifier, internalData map[string]interface{}, fullChildPath string) error {
+func conditionalInsert(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, loader Loader, listener thriftext.DataChangeNotifier, lock *sync.Mutex, internalData map[string]interface{}, fullChildPath string) error {
 
 	newKey := path.Base(fullChildPath)
 
@@ -66,7 +68,9 @@ func conditionalInsert(ctx *thriftext.ThreadCtx, client curator.CuratorFramework
 	}
 
 	if item != nil {
+		lock.Lock()
 		internalData[newKey] = item
+		lock.Unlock()
 	}
 
 	return nil
@@ -86,12 +90,15 @@ func NewZkWatchedMap(
 		SetMaxDepth(1).
 		SetCacheData(false)
 
+	insertLock := &sync.Mutex{}
+
 	node.Listenable().AddListener(&ChildLoader{
 		internalData: internalData,
 		loader:       loader,
 		root:         root,
 		ctx:          thriftext.NewThreadCtx(),
 		listener:     listener,
+		lock:         insertLock,
 	})
 
 	startError := node.Start()
@@ -106,7 +113,7 @@ func NewZkWatchedMap(
 
 	ctx := thriftext.NewThreadCtx()
 	for _, element := range initialChildren {
-		err := conditionalInsert(ctx, client, loader, listener, internalData, path.Join(root, element))
+		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, path.Join(root, element))
 		if err != nil {
 			return nil, err
 		}
