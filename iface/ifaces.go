@@ -102,7 +102,7 @@ type Host interface {
 }
 
 type Partitioner interface {
-	Partition(key []byte, numPartitions int32) int64
+	Partition(key []byte, numPartitions int32) int32
 }
 
 type Domain interface {

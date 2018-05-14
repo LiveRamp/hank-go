@@ -448,7 +448,7 @@ func TestConsistentHashing(t *testing.T) {
 			host2.GetAddress().Print(),
 		})
 
-		keyHash := int64(42)
+		keyHash := int32(42)
 
 		for j := 0; j < 10; j++ {
 
