@@ -220,6 +220,7 @@ func (p *HostConnection) OnDataChange(newVal interface{}) (err error){
 
 	}
 
+	p.hostState = newState
 	p.Unlock()
 	return nil
 
