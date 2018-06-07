@@ -11,6 +11,7 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/syncext"
 	"github.com/LiveRamp/hank-go-client/thriftext"
+	"strconv"
 )
 
 type HostConnection struct {
@@ -19,6 +20,7 @@ type HostConnection struct {
 
 	tryLockTimeoutMs             int32
 	establishConnectionTimeoutMs int32
+	establishConnectionAttempts   int32
 	queryTimeoutMs               int32
 	bulkQueryTimeoutMs           int32
 
@@ -34,14 +36,16 @@ func NewHostConnection(
 	host iface.Host,
 	tryLockTimeoutMs int32,
 	establishConnectionTimeoutMs int32,
+	establishConnectionAttempts int32,
 	queryTimeoutMs int32,
 	bulkQueryTimeoutMs int32,
-) *HostConnection {
+) (*HostConnection, error) {
 
 	connection := HostConnection{
 		host:                         host,
 		tryLockTimeoutMs:             tryLockTimeoutMs,
 		establishConnectionTimeoutMs: establishConnectionTimeoutMs,
+		establishConnectionAttempts:   establishConnectionAttempts,
 		queryTimeoutMs:               queryTimeoutMs,
 		bulkQueryTimeoutMs:           bulkQueryTimeoutMs,
 		lock:                         syncext.NewMutex(),
@@ -49,9 +53,13 @@ func NewHostConnection(
 
 	host.AddStateChangeListener(&connection)
 
-	connection.OnDataChange(string(host.GetState()))
+	err := connection.OnDataChange(string(host.GetState()))
 
-	return &connection
+	if err != nil{
+		return nil, err
+	}
+
+	return &connection, nil
 
 }
 
@@ -172,7 +180,7 @@ func (p *HostConnection) connect() error {
 	return nil
 }
 
-func (p *HostConnection) OnDataChange(newVal interface{}) {
+func (p *HostConnection) OnDataChange(newVal interface{}) (err error){
 
 	if newVal == nil {
 		newVal = string(iface.HOST_OFFLINE)
@@ -189,15 +197,30 @@ func (p *HostConnection) OnDataChange(newVal interface{}) {
 
 	if newState == iface.HOST_SERVING {
 
-		err := p.connect()
-		if err != nil {
-			fmt.Println("Error connecting to host "+p.host.GetAddress().Print(), err)
-			p.Unlock()
+		tries := int32(0)
+
+		for tries <= p.establishConnectionAttempts {
+
+			err := p.connect()
+
+			if err == nil {
+				p.hostState = newState
+				p.Unlock()
+				return nil
+			}else{
+				fmt.Println("Error connecting to host "+p.host.GetAddress().Print()+" on attempt "+strconv.Itoa(int(tries))+".", err)
+			}
 		}
+
+		msg := "Failed to connect to host " + p.host.GetAddress().Print() + " after " + strconv.Itoa(int(p.establishConnectionAttempts)) + " attempts.  Failing."
+
+		fmt.Println(msg, err)
+		p.Unlock()
+		return errors.New(msg)
 
 	}
 
-	p.hostState = newState
 	p.Unlock()
+	return nil
 
 }

@@ -47,7 +47,7 @@ func TestQueryWhenServing(t *testing.T) {
 		return host.GetState() == iface.HOST_IDLE
 	})
 
-	conn := NewHostConnection(host, 100, 100, 100, 100)
+	conn,_ := NewHostConnection(host, 100, 100, 1, 100, 100)
 	_, idleGetErr := conn.Get(0, []byte("key1"), false)
 
 	assert.Equal(t, "Connection to host is not available (host is not serving).", idleGetErr.Error())
@@ -99,7 +99,7 @@ func TestTimeouts(t *testing.T) {
 
 	host.SetState(ctx, iface.HOST_SERVING)
 
-	conn := NewHostConnection(host, 100, 100, 100, 100)
+	conn,_ := NewHostConnection(host, 100, 100, 1, 100, 100)
 
 	fixtures.WaitUntilOrFail(t, func() bool {
 		return conn.IsServing()

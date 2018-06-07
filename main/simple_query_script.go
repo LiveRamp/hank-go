@@ -38,7 +38,7 @@ func main() {
 	hosts := ring0.GetHosts(ctx)
 	host := hosts[0]
 
-	conn := hank_client.NewHostConnection(host, 100, 100, 100, 100)
+	conn,_ := hank_client.NewHostConnection(host, 100, 100, 1, 100, 100)
 
 	domain := coordinator.GetDomain(argsWithoutProg[1])
 	domainId := domain.GetId()

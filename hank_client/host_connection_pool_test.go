@@ -116,7 +116,7 @@ func setupFailingServerClient(t *testing.T, ctx *thriftext.ThreadCtx, client cur
 func setupServerClient(t *testing.T, server hank.PartitionServer, ctx *thriftext.ThreadCtx, client curator.CuratorFramework, i int) (iface.Host, func(), *HostConnection) {
 	host, close := createHostServer(t, ctx, client, i, server)
 
-	conn := NewHostConnection(host, 100, 100, 100, 100)
+	conn,_ := NewHostConnection(host, 100, 100, 1, 100, 100)
 	fixtures.WaitUntilOrFail(t, func() bool {
 		return conn.IsServing()
 	})

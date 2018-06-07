@@ -459,20 +459,29 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 				for i := 1; i <= int(opts.NumConnectionsPerHost); i++ {
 
-					connection := NewHostConnection(
+					connection, err := NewHostConnection(
 						host,
 						opts.TryLockTimeoutMs,
 						opts.EstablishConnectionTimeoutMs,
+						opts.EstablishConnectionRetries,
 						opts.QueryTimeoutMs,
 						opts.BulkQueryTimeoutMs,
 					)
 
-					host.AddStateChangeListener(connection)
-					hostConnections = append(hostConnections, connection)
+					if err != nil {
+						host.AddStateChangeListener(connection)
+						hostConnections = append(hostConnections, connection)
+					}
 
 				}
 
-				pool, err = CreateHostConnectionPool(hostConnections, NO_SEED, preferredHosts)
+				if int32(len(hostConnections)) >= opts.MinConnectionsPerHost {
+					pool, err = CreateHostConnectionPool(hostConnections, NO_SEED, preferredHosts)
+				}else{
+					return errors.New("Unable to create "+strconv.Itoa(int(opts.MinConnectionsPerHost))+" connections to host "+
+						host.GetAddress().Print()+": only created "+strconv.Itoa(len(hostConnections))+" connections")
+				}
+
 				if err != nil {
 					return err
 				}
