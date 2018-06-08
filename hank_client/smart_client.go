@@ -450,36 +450,55 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 			if pool == nil {
 
-				hostConnections := []*HostConnection{}
-
 				fmt.Println("Establishing " + strconv.Itoa(int(opts.NumConnectionsPerHost)) + " connections to " + host.GetAddress().Print() +
 					"with connection try lock timeout = " + strconv.Itoa(int(opts.TryLockTimeoutMs)) + "ms, " +
 					"connection establisment timeout = " + strconv.Itoa(int(opts.EstablishConnectionTimeoutMs)) + "ms, " +
 					"query timeout = " + strconv.Itoa(int(opts.QueryTimeoutMs)) + "ms")
 
+				var wg sync.WaitGroup
+				wg.Add(2)
+
+				connections := make(chan *HostConnection, 2)
+
 				for i := 1; i <= int(opts.NumConnectionsPerHost); i++ {
+					go func() {
+						defer wg.Done()
 
-					connection, err := NewHostConnection(
-						host,
-						opts.TryLockTimeoutMs,
-						opts.EstablishConnectionTimeoutMs,
-						opts.EstablishConnectionRetries,
-						opts.QueryTimeoutMs,
-						opts.BulkQueryTimeoutMs,
-					)
+						connection, err := NewHostConnection(
+							host,
+							opts.TryLockTimeoutMs,
+							opts.EstablishConnectionTimeoutMs,
+							opts.EstablishConnectionRetries,
+							opts.QueryTimeoutMs,
+							opts.BulkQueryTimeoutMs,
+						)
 
-					if err != nil {
-						host.AddStateChangeListener(connection)
-						hostConnections = append(hostConnections, connection)
-					}
-
+						if err != nil {
+							connections <- connection
+						}
+					}()
 				}
 
-				if int32(len(hostConnections)) >= opts.MinConnectionsPerHost {
+				fmt.Println("Waiting for connections to complete")
+				wg.Wait()
+
+				close(connections)
+
+
+				if int32(len(connections)) >= opts.MinConnectionsPerHost {
+
+					var hostConnections []*HostConnection
+
+					for connection := range connections {
+						hostConnections = append(hostConnections, connection)
+						host.AddStateChangeListener(connection)
+					}
+
 					pool, err = CreateHostConnectionPool(hostConnections, NO_SEED, preferredHosts)
+
 				}else{
 					return errors.New("Unable to create "+strconv.Itoa(int(opts.MinConnectionsPerHost))+" connections to host "+
-						host.GetAddress().Print()+": only created "+strconv.Itoa(len(hostConnections))+" connections")
+						host.GetAddress().Print()+": only created "+strconv.Itoa(len(connections))+" connections")
 				}
 
 				if err != nil {
