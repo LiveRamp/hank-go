@@ -246,6 +246,11 @@ func TestIt(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
+//	TODO test that the client fails out when it can't connect to hosts initially
+
+//	TODO test that the client does not update the connection cache if it fails to make enough connections to partition servers w/ new param
+//		(or if it can't get the information from zookeeper)
+
 func setStateBlocking(t *testing.T, host iface.Host, ctx *thriftext.ThreadCtx, state iface.HostState) {
 	host.SetState(ctx, state)
 	fixtures.WaitUntilOrFail(t, func() bool {

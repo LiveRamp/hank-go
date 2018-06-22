@@ -9,7 +9,7 @@ type EnvironmentValue struct {
 
 type hankSmartClientOptions struct {
 	NumConnectionsPerHost int32
-	MinConnectionsPerHost int32
+	MinConnectionsPerPartition int32
 
 	TryLockTimeoutMs             int32
 	EstablishConnectionTimeoutMs int32
@@ -27,7 +27,7 @@ type hankSmartClientOptions struct {
 func NewHankSmartClientOptions() *hankSmartClientOptions {
 	return &hankSmartClientOptions{
 		NumConnectionsPerHost:        int32(1),
-		MinConnectionsPerHost:        int32(1),
+		MinConnectionsPerPartition:        int32(1),
 		TryLockTimeoutMs:             int32(1000),
 		EstablishConnectionTimeoutMs: int32(1000),
 		QueryTimeoutMs:               int32(1000),

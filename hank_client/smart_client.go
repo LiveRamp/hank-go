@@ -120,7 +120,12 @@ func New(
 		connectionCacheLock,
 	}
 
-	client.updateConnectionCache(ctx)
+	//	if we can't build a proper cache when first instantiating the client, fail out hard.
+	//	once you're running later, we don't want to do this
+	err = client.updateConnectionCache(ctx)
+	if err != nil{
+		return nil, err
+	}
 
 	go client.updateLoop(&stopping, connectionCacheLock)
 	go client.runtimeStatsLoop(&stopping)
@@ -240,13 +245,19 @@ func GetClientMetadata() (*hank.ClientMetadata, error) {
 	return metadata, nil
 }
 
-func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) {
+func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error {
 	fmt.Println("Loading Hank's smart client metadata cache and connections.")
 
 	newServerToConnections := make(map[string]*HostConnectionPool)
 	newDomainToPartitionToConnections := make(map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool)
 
-	p.buildNewConnectionCache(ctx, newServerToConnections, newDomainToPartitionToConnections)
+	err := p.buildNewConnectionCache(ctx, newServerToConnections, newDomainToPartitionToConnections)
+
+	if err != nil {
+		fmt.Printf("Error building new connection cache:")
+		fmt.Println(err)
+		return err
+	}
 
 	oldServerToConnections := p.serverToConnections
 
@@ -264,6 +275,7 @@ func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) {
 		}
 	}
 
+	return nil
 }
 
 func noSuchDomain() *hank.HankResponse {
@@ -456,11 +468,11 @@ func (p *HankSmartClient) buildNewConnectionCache(
 					"query timeout = " + strconv.Itoa(int(opts.QueryTimeoutMs)) + "ms")
 
 				var wg sync.WaitGroup
-				wg.Add(2)
+				wg.Add(int(opts.NumConnectionsPerHost))
 
-				connections := make(chan *HostConnection, 2)
+				connections := make(chan *HostConnection, int(opts.NumConnectionsPerHost))
 
-				for i := 1; i <= int(opts.NumConnectionsPerHost); i++ {
+				for i := 0; i < int(opts.NumConnectionsPerHost); i++ {
 					go func() {
 						defer wg.Done()
 
@@ -473,9 +485,10 @@ func (p *HankSmartClient) buildNewConnectionCache(
 							opts.BulkQueryTimeoutMs,
 						)
 
-						if err != nil {
+						if err == nil {
 							connections <- connection
 						}
+
 					}()
 				}
 
@@ -484,22 +497,14 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 				close(connections)
 
+				var hostConnections []*HostConnection
 
-				if int32(len(connections)) >= opts.MinConnectionsPerHost {
-
-					var hostConnections []*HostConnection
-
-					for connection := range connections {
-						hostConnections = append(hostConnections, connection)
-						host.AddStateChangeListener(connection)
-					}
-
-					pool, err = CreateHostConnectionPool(hostConnections, NO_SEED, preferredHosts)
-
-				}else{
-					return errors.New("Unable to create "+strconv.Itoa(int(opts.MinConnectionsPerHost))+" connections to host "+
-						host.GetAddress().Print()+": only created "+strconv.Itoa(len(connections))+" connections")
+				for connection := range connections {
+					hostConnections = append(hostConnections, connection)
+					host.AddStateChangeListener(connection)
 				}
+
+				pool, err = CreateHostConnectionPool(hostConnections, NO_SEED, preferredHosts)
 
 				if err != nil {
 					return err
@@ -518,6 +523,11 @@ func (p *HankSmartClient) buildNewConnectionCache(
 			connections := []*HostConnection{}
 			for _, address := range addresses {
 				connections = append(connections, newServerToConnections[address.Print()].GetConnections()...)
+			}
+
+			if len(connections) < int(p.options.MinConnectionsPerPartition) {
+				return errors.New("Could not establish "+strconv.Itoa(int(p.options.MinConnectionsPerPartition)) +
+					" connections to partition "+strconv.Itoa(int(partitionID))+" for domain "+strconv.Itoa(int(domainID)))
 			}
 
 			partitionToConnections[partitionID], err = CreateHostConnectionPool(connections,
