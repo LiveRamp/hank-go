@@ -1,1 +1,5 @@
 /vendor/
+# This is a convenient location to install zookeeper for local testing.
+# github.com/samuel/go-zookeeper includes it in the search JAR search path. See
+# https://github.com/samuel/go-zookeeper/blob/87e1bca4477a3cc767ca71be023ced183d74e538/zk/server_java.go#L87.
+/zookeeper-*/
