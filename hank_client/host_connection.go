@@ -3,6 +3,7 @@ package hank_client
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
@@ -28,6 +29,17 @@ type HostConnection struct {
 	ctx *thriftext.ThreadCtx
 
 	lock *syncext.TimeoutMutex
+
+	// getMu prevents concurrent access to PartitionServerClient#Get which is
+	// not thread-safe because it has a single thrift.TCompactProtocol instance
+	// which keeps internal state while writing bytes.
+	//
+	// As an example, TCompactProtocol#WriteStructBegin appends an item to an
+	// internal slice and TCompactProtocol#WriteStructEnd assumes it is there
+	// and pops it. If multiple writes occur at the same time, it is possible
+	// for one of the appends to be "dropped", leading to a panic when
+	// WriteStructEnd attempts to pop from an empty slice.
+	getMu *sync.Mutex
 }
 
 func NewHostConnection(
@@ -128,6 +140,8 @@ func (p *HostConnection) Get(id iface.DomainID, key []byte, isLockHeld bool) (*h
 		}
 	}
 
+	p.getMu.Lock()
+	defer p.getMu.Unlock()
 	resp, err := p.client.Get(int32(id), key)
 
 	if err != nil {
