@@ -49,7 +49,11 @@ func (lw logWriter) Write(b []byte) (int, error) {
 }
 
 func SetupZookeeper(t *testing.T) (*zk.TestCluster, curator.CuratorFramework) {
-	cluster, _ := zk.StartTestCluster(1, nil, logWriter{t: t, p: "[ZKERR] "})
+	cluster, err := zk.StartTestCluster(1, nil, logWriter{t: t, p: "[ZKERR] "})
+	if err != nil{
+		fmt.Println(err)
+	}
+
 	cluster.StartAllServers()
 
 	client := curator.NewClient("127.0.0.1:"+strconv.Itoa(cluster.Servers[0].Port), curator.NewRetryNTimes(1, time.Second))
