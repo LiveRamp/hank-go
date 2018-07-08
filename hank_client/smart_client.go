@@ -255,7 +255,7 @@ func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error 
 
 	err := p.buildNewConnectionCache(ctx, newServerToConnections, newDomainToPartitionToConnections)
 
-	if err != nil {
+	if err != nil || len(newServerToConnections) == 0 {
 		fmt.Printf("Error building new connection cache:")
 		fmt.Println(err)
 		return err
@@ -489,6 +489,9 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 						if err == nil {
 							connections <- connection
+						}else{
+							fmt.Println("Error connecting to host:")
+							fmt.Println(err)
 						}
 
 					}()
