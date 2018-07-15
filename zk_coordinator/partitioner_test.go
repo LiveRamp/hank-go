@@ -1,9 +1,9 @@
 package zk_coordinator
 
 import (
-	"testing"
 	"encoding/hex"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestPartitioner(t *testing.T) {
@@ -22,7 +22,6 @@ func TestPartitioner(t *testing.T) {
 	assert.Equal(t, int32(193), partition)
 
 }
-
 
 func TestMurmur64(t *testing.T) {
 

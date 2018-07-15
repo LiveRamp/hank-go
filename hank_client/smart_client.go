@@ -123,7 +123,7 @@ func New(
 	//	if we can't build a proper cache when first instantiating the client, fail out hard.
 	//	once you're running later, we don't want to do this
 	err = client.updateConnectionCache(ctx)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -489,7 +489,7 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 						if err == nil {
 							connections <- connection
-						}else{
+						} else {
 							fmt.Println("Error connecting to host:")
 							fmt.Println(err)
 						}
@@ -525,7 +525,7 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 		for partitionID, addresses := range connections {
 
-			connections := []*HostConnection{}
+			var connections []*HostConnection
 			for _, address := range addresses {
 				connections = append(connections, newServerToConnections[address.Print()].GetConnections()...)
 			}
@@ -533,8 +533,7 @@ func (p *HankSmartClient) buildNewConnectionCache(
 			servingConnections := countServingConnections(connections)
 
 			if servingConnections < int(p.options.MinConnectionsPerPartition) {
-				return errors.New("Could not establish "+strconv.Itoa(int(p.options.MinConnectionsPerPartition)) +
-					" connections to partition "+strconv.Itoa(int(partitionID))+" for domain "+strconv.Itoa(int(domainID)))
+				return errors.New(fmt.Sprintf("Could not establish %v connections to partition %v for domain %v", p.options.MinConnectionsPerPartition, partitionID, domainID))
 			}
 
 			partitionToConnections[partitionID], err = CreateHostConnectionPool(connections,
@@ -550,11 +549,11 @@ func (p *HankSmartClient) buildNewConnectionCache(
 	return nil
 }
 
-func countServingConnections(connections []*HostConnection) int{
+func countServingConnections(connections []*HostConnection) int {
 
 	connected := 0
 	for _, connection := range connections {
-		if !connection.IsDisconnected(){
+		if !connection.IsDisconnected() {
 			connected++
 		}
 	}

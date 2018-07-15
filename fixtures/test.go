@@ -50,8 +50,10 @@ func (lw logWriter) Write(b []byte) (int, error) {
 
 func SetupZookeeper(t *testing.T) (*zk.TestCluster, curator.CuratorFramework) {
 	cluster, err := zk.StartTestCluster(1, nil, logWriter{t: t, p: "[ZKERR] "})
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
+		t.FailNow()
+		return nil, nil
 	}
 
 	cluster.StartAllServers()

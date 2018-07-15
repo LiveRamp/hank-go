@@ -1,11 +1,10 @@
-
 /*
 
 Copies from the upstream thrift version before https://github.com/apache/thrift/commit/a576896398f03d1854f128479d31659446c51027#diff-883b034244fa515763cccc7e062a762c.
 
 Test shutdown hangs forever if you try to end cleanly.  Feel free to fix upstream.  I don't have time.
 
- */
+*/
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -29,10 +28,10 @@ Test shutdown hangs forever if you try to end cleanly.  Feel free to fix upstrea
 package thrift_services
 
 import (
+	"git.apache.org/thrift.git/lib/go/thrift"
 	"log"
 	"runtime/debug"
 	"sync"
-	"git.apache.org/thrift.git/lib/go/thrift"
 )
 
 /*

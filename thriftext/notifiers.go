@@ -17,7 +17,7 @@ type Adapter struct {
 	Notifier DataChangeNotifier
 }
 
-func (t *Adapter) OnDataChange(newVal interface{}) (err error){
+func (t *Adapter) OnDataChange(newVal interface{}) (err error) {
 	t.Notifier.OnChange()
 	return nil
 }

@@ -191,10 +191,10 @@ func TestIt(t *testing.T) {
 
 	//	query once
 	val, err := cachingClient.Get(domain1.GetName(), []byte("key1"))
+	assert.Nil(t, err)
+
 	assert.True(t, reflect.DeepEqual("value1", string(val.Value)))
 	assert.Equal(t, int32(1), handler2.NumRequests)
-
-	fmt.Println(err)
 
 	// verify was found in cache
 	val, err = cachingClient.Get(domain1.GetName(), []byte("key1"))
@@ -262,7 +262,7 @@ func TestFailConnect(t *testing.T) {
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
 	rg1, _ := coord.AddRingGroup(ctx, "rg1")
-	ring1, _  := rg1.AddRing(ctx, iface.RingID(0))
+	ring1, _ := rg1.AddRing(ctx, iface.RingID(0))
 
 	host0, _ := ring1.AddHost(ctx, "localhost", 12345, []string{})
 	host0Domain, _ := host0.AddDomain(ctx, domain0)
@@ -272,7 +272,6 @@ func TestFailConnect(t *testing.T) {
 		SetNumConnectionsPerHost(2).
 		SetQueryTimeoutMs(100).
 		SetMinConnectionsPerPartition(1)
-
 
 	fixtures.WaitUntilOrFail(t, func() bool {
 		return len(coord.GetRingGroup("rg1").GetRing(0).GetHosts(ctx)[0].GetHostDomain(ctx, 0).GetPartitions()) == 1
@@ -287,7 +286,7 @@ func TestFailConnect(t *testing.T) {
 	server1Values["key1"] = "value1"
 
 	handler := thrift_services.NewPartitionServerHandler(server1Values)
-	close1:=	createServer(t, ctx, host0, handler)
+	close1 := createServer(t, ctx, host0, handler)
 
 	setStateBlocking(t, host0, ctx, iface.HOST_SERVING)
 
@@ -338,7 +337,7 @@ func TestSkipConnectionCacheRebuild(t *testing.T) {
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
 	rg1, _ := coord.AddRingGroup(ctx, "rg1")
-	ring1, _  := rg1.AddRing(ctx, iface.RingID(0))
+	ring1, _ := rg1.AddRing(ctx, iface.RingID(0))
 
 	host0, _ := ring1.AddHost(ctx, "localhost", 12345, []string{})
 	host0Domain, _ := host0.AddDomain(ctx, domain0)
@@ -389,11 +388,9 @@ func TestSkipConnectionCacheRebuild(t *testing.T) {
 	resp, _ = smartClient.Get(domain0.GetName(), []byte("key1"))
 	assert.Equal(t, "value1", string(resp.Value))
 
-
 	close1()
 
 }
-
 
 func queryMatches(key string, value string, rgName string, domainName string, coord *zk_coordinator.ZkCoordinator, options *hankSmartClientOptions) func() bool {
 	return func() bool {
@@ -418,7 +415,6 @@ func queryMatches(key string, value string, rgName string, domainName string, co
 
 	}
 }
-
 
 func setStateBlocking(t *testing.T, host iface.Host, ctx *thriftext.ThreadCtx, state iface.HostState) {
 	host.SetState(ctx, state)

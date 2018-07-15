@@ -20,7 +20,7 @@ type HostConnection struct {
 
 	tryLockTimeoutMs             int32
 	establishConnectionTimeoutMs int32
-	establishConnectionAttempts   int32
+	establishConnectionAttempts  int32
 	queryTimeoutMs               int32
 	bulkQueryTimeoutMs           int32
 
@@ -45,7 +45,7 @@ func NewHostConnection(
 		host:                         host,
 		tryLockTimeoutMs:             tryLockTimeoutMs,
 		establishConnectionTimeoutMs: establishConnectionTimeoutMs,
-		establishConnectionAttempts:   establishConnectionAttempts,
+		establishConnectionAttempts:  establishConnectionAttempts,
 		queryTimeoutMs:               queryTimeoutMs,
 		bulkQueryTimeoutMs:           bulkQueryTimeoutMs,
 		lock:                         syncext.NewMutex(),
@@ -55,7 +55,7 @@ func NewHostConnection(
 
 	err := connection.OnDataChange(string(host.GetState()))
 
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -180,7 +180,7 @@ func (p *HostConnection) connect() error {
 	return nil
 }
 
-func (p *HostConnection) OnDataChange(newVal interface{}) (err error){
+func (p *HostConnection) OnDataChange(newVal interface{}) (err error) {
 
 	if newVal == nil {
 		newVal = string(iface.HOST_OFFLINE)
@@ -189,6 +189,7 @@ func (p *HostConnection) OnDataChange(newVal interface{}) (err error){
 	newState := iface.HostState(newVal.(string))
 
 	p.Lock()
+	defer p.Unlock()
 
 	disconnectErr := p.Disconnect()
 	if disconnectErr != nil {
@@ -205,9 +206,8 @@ func (p *HostConnection) OnDataChange(newVal interface{}) (err error){
 
 			if err == nil {
 				p.hostState = newState
-				p.Unlock()
 				return nil
-			}else{
+			} else {
 				fmt.Println("Error connecting to host "+p.host.GetAddress().Print()+" on attempt "+strconv.Itoa(int(tries))+".", err)
 			}
 		}
@@ -215,13 +215,11 @@ func (p *HostConnection) OnDataChange(newVal interface{}) (err error){
 		msg := "Failed to connect to host " + p.host.GetAddress().Print() + " after " + strconv.Itoa(int(p.establishConnectionAttempts)) + " attempts.  Failing."
 
 		fmt.Println(msg, err)
-		p.Unlock()
 		return errors.New(msg)
 
 	}
 
 	p.hostState = newState
-	p.Unlock()
 	return nil
 
 }

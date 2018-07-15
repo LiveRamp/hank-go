@@ -13,8 +13,8 @@ import (
 
 	"github.com/LiveRamp/hank-go-client/hank_client"
 	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 	hosts := ring0.GetHosts(ctx)
 	host := hosts[0]
 
-	conn,_ := hank_client.NewHostConnection(host, 100, 100, 1, 100, 100)
+	conn, _ := hank_client.NewHostConnection(host, 100, 100, 1, 100, 100)
 
 	domain := coordinator.GetDomain(argsWithoutProg[1])
 	domainId := domain.GetId()
