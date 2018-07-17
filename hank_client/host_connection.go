@@ -20,7 +20,7 @@ type HostConnection struct {
 
 	tryLockTimeoutMs             int32
 	establishConnectionTimeoutMs int32
-	establishConnectionAttempts  int32
+	establishConnectionRetries  int32
 	queryTimeoutMs               int32
 	bulkQueryTimeoutMs           int32
 
@@ -36,7 +36,7 @@ func NewHostConnection(
 	host iface.Host,
 	tryLockTimeoutMs int32,
 	establishConnectionTimeoutMs int32,
-	establishConnectionAttempts int32,
+	establishConnectionRetries int32,
 	queryTimeoutMs int32,
 	bulkQueryTimeoutMs int32,
 ) (*HostConnection, error) {
@@ -45,7 +45,7 @@ func NewHostConnection(
 		host:                         host,
 		tryLockTimeoutMs:             tryLockTimeoutMs,
 		establishConnectionTimeoutMs: establishConnectionTimeoutMs,
-		establishConnectionAttempts:  establishConnectionAttempts,
+		establishConnectionRetries:  establishConnectionRetries,
 		queryTimeoutMs:               queryTimeoutMs,
 		bulkQueryTimeoutMs:           bulkQueryTimeoutMs,
 		lock:                         syncext.NewMutex(),
@@ -200,7 +200,7 @@ func (p *HostConnection) OnDataChange(newVal interface{}) (err error) {
 
 		tries := int32(0)
 
-		for tries <= p.establishConnectionAttempts {
+		for tries <= p.establishConnectionRetries {
 
 			err := p.connect()
 
@@ -212,7 +212,7 @@ func (p *HostConnection) OnDataChange(newVal interface{}) (err error) {
 			}
 		}
 
-		msg := "Failed to connect to host " + p.host.GetAddress().Print() + " after " + strconv.Itoa(int(p.establishConnectionAttempts)) + " attempts.  Failing."
+		msg := "Failed to connect to host " + p.host.GetAddress().Print() + " after " + strconv.Itoa(int(p.establishConnectionRetries)) + " retries.  Failing."
 
 		fmt.Println(msg, err)
 		return errors.New(msg)

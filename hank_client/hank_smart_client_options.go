@@ -30,12 +30,20 @@ func NewHankSmartClientOptions() *hankSmartClientOptions {
 		MinConnectionsPerPartition:   int32(0),
 		TryLockTimeoutMs:             int32(1000),
 		EstablishConnectionTimeoutMs: int32(1000),
+		EstablishConnectionRetries:   int32(0),
 		QueryTimeoutMs:               int32(1000),
 		BulkQueryTimeoutMs:           int32(1000),
 		ResponseCacheNumItems:        int32(1000),
 		ResponseCacheExpiryTime:      time.Hour,
 	}
 }
+
+
+func (p *hankSmartClientOptions) SetEstablishConnectionRetries(retries int32) *hankSmartClientOptions {
+	p.EstablishConnectionRetries = retries
+	return p
+}
+
 
 func (p *hankSmartClientOptions) SetResponseCacheExpiryTime(time time.Duration) *hankSmartClientOptions {
 	p.ResponseCacheExpiryTime = time
