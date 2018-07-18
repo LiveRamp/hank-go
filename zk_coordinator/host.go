@@ -238,6 +238,11 @@ func (p *ZkHost) SetState(ctx *thriftext.ThreadCtx, state iface.HostState) error
 }
 
 func (p *ZkHost) GetState() iface.HostState {
+
+	if p.state.Get() == nil {
+		return iface.HOST_OFFLINE
+	}
+
 	return iface.HostState(p.state.Get().(string))
 }
 

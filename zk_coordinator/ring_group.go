@@ -68,6 +68,9 @@ func loadZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, 
 	multiListener.AddClient(listener)
 
 	rings, err := curatorext.NewZkWatchedMap(client, rgRootPath, multiListener, loadZkRing)
+	if err != nil {
+		return nil, err
+	}
 
 	return &ZkRingGroup{ringGroupPath: rgRootPath, client: client, clients: clients, rings: rings, localNotifier: multiListener}, nil
 }
@@ -133,9 +136,12 @@ func (p *ZkRingGroup) GetRing(ringNum iface.RingID) iface.Ring {
 func (p *ZkRingGroup) GetRings() []iface.Ring {
 
 	rings := []iface.Ring{}
-	for _, item := range p.rings.Values() {
-		i := item.(iface.Ring)
-		rings = append(rings, i)
+
+	if p.rings != nil {
+		for _, item := range p.rings.Values() {
+			i := item.(iface.Ring)
+			rings = append(rings, i)
+		}
 	}
 
 	return rings
