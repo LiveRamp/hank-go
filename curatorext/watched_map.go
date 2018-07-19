@@ -113,17 +113,27 @@ func NewZkWatchedMap(
 		return nil, err
 	}
 
-	ctx := thriftext.NewThreadCtx()
-	//	TODO load in parallel?  need to be careful with state (ctx)
+	var wg sync.WaitGroup
+	wg.Add(len(initialChildren))
+
 	for _, element := range initialChildren {
-		child := path.Join(root, element)
-		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, child)
-		if err != nil {
-			//	avoid failing out here in case of ephemeral nodes ex which represent dead hosts
-			fmt.Println(fmt.Sprintf("Error loading initial child: %v", child))
-			fmt.Println(err)
-		}
+
+		go func(){
+			defer wg.Done()
+			// Hope this doesn't run into memory problems
+			ctx := thriftext.NewThreadCtx()
+			child := path.Join(root, element)
+			err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, child)
+			if err != nil {
+				//	avoid failing out here in case of ephemeral nodes ex which represent dead hosts
+				fmt.Println(fmt.Sprintf("Error loading initial child: %v", child))
+				fmt.Println(err)
+			}
+		}()
+
 	}
+
+	wg.Wait()
 
 	return &ZkWatchedMap{node: node, client: client, Root: root, loader: loader, internalData: internalData}, nil
 }
