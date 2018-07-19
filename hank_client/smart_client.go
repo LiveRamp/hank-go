@@ -87,6 +87,7 @@ func New(
 	metadata, err := GetClientMetadata()
 
 	if err != nil {
+		fmt.Println("Error fetching client metadata")
 		return nil, err
 	}
 
@@ -94,6 +95,7 @@ func New(
 	registerErr := ringGroup.RegisterClient(ctx, metadata)
 
 	if registerErr != nil {
+		fmt.Println("Error registering client")
 		return nil, registerErr
 	}
 
@@ -124,6 +126,7 @@ func New(
 	//	once you're running later, we don't want to do this
 	err = client.updateConnectionCache(ctx)
 	if err != nil {
+		fmt.Println("Error updating connection cache")
 		return nil, err
 	}
 
