@@ -116,7 +116,6 @@ func NewZkWatchedMap(
 	ctx := thriftext.NewThreadCtx()
 
 	for _, element := range initialChildren {
-		// Hope this doesn't run into memory problems
 		child := path.Join(root, element)
 		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, child)
 		if err != nil {
