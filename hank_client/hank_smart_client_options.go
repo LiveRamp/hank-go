@@ -8,10 +8,12 @@ type EnvironmentValue struct {
 }
 
 type hankSmartClientOptions struct {
-	NumConnectionsPerHost int32
+	NumConnectionsPerHost      int32
+	MinConnectionsPerPartition int32
 
 	TryLockTimeoutMs             int32
 	EstablishConnectionTimeoutMs int32
+	EstablishConnectionRetries   int32
 	QueryTimeoutMs               int32
 	BulkQueryTimeoutMs           int32
 	PreferredHostEnvironment     *EnvironmentValue
@@ -25,14 +27,23 @@ type hankSmartClientOptions struct {
 func NewHankSmartClientOptions() *hankSmartClientOptions {
 	return &hankSmartClientOptions{
 		NumConnectionsPerHost:        int32(1),
+		MinConnectionsPerPartition:   int32(0),
 		TryLockTimeoutMs:             int32(1000),
 		EstablishConnectionTimeoutMs: int32(1000),
+		EstablishConnectionRetries:   int32(0),
 		QueryTimeoutMs:               int32(1000),
 		BulkQueryTimeoutMs:           int32(1000),
 		ResponseCacheNumItems:        int32(1000),
 		ResponseCacheExpiryTime:      time.Hour,
 	}
 }
+
+
+func (p *hankSmartClientOptions) SetEstablishConnectionRetries(retries int32) *hankSmartClientOptions {
+	p.EstablishConnectionRetries = retries
+	return p
+}
+
 
 func (p *hankSmartClientOptions) SetResponseCacheExpiryTime(time time.Duration) *hankSmartClientOptions {
 	p.ResponseCacheExpiryTime = time
@@ -81,5 +92,10 @@ func (p *hankSmartClientOptions) SetQueryMaxNumTries(tries int32) *hankSmartClie
 
 func (p *hankSmartClientOptions) SetPreferredEnvironment(env *EnvironmentValue) *hankSmartClientOptions {
 	p.PreferredHostEnvironment = env
+	return p
+}
+
+func (p *hankSmartClientOptions) SetMinConnectionsPerPartition(connections int32) *hankSmartClientOptions {
+	p.MinConnectionsPerPartition = connections
 	return p
 }

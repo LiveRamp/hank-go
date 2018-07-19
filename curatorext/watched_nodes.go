@@ -31,7 +31,7 @@ func TSerializer(ctx *thriftext.ThreadCtx, val interface{}) ([]byte, error) {
 func LoadThriftWatchedNode(client curator.CuratorFramework,
 	path string,
 	constructor Constructor) (*ZkWatchedNode, error) {
-	return LoadZkWatchedNode(client, path, constructor, TSerializer, TDeserializer)
+	return LoadZkWatchedNode(client, path, constructor, TSerializer, TDeserializer, true)
 }
 
 func NewThriftWatchedNode(client curator.CuratorFramework,
@@ -61,7 +61,7 @@ func ByteArrayDeserializer(ctx *thriftext.ThreadCtx, raw []byte, constructor Con
 }
 
 func LoadBytesWatchedNode(client curator.CuratorFramework, path string) (*ZkWatchedNode, error) {
-	return LoadZkWatchedNode(client, path, nil, ByteArraySerializer, ByteArrayDeserializer)
+	return LoadZkWatchedNode(client, path, nil, ByteArraySerializer, ByteArrayDeserializer, true)
 }
 
 func NewBytesWatchedNode(client curator.CuratorFramework, mode curator.CreateMode, path string, initialValue []byte) (*ZkWatchedNode, error) {
@@ -79,7 +79,7 @@ func IntDeserializer(ctx *thriftext.ThreadCtx, raw []byte, constructor Construct
 }
 
 func LoadIntWatchedNode(client curator.CuratorFramework, path string) (*ZkWatchedNode, error) {
-	return LoadZkWatchedNode(client, path, nil, IntSerializer, IntDeserializer)
+	return LoadZkWatchedNode(client, path, nil, IntSerializer, IntDeserializer, true)
 }
 
 func NewIntWatchedNode(client curator.CuratorFramework, mode curator.CreateMode, path string, initialValue int) (*ZkWatchedNode, error) {
@@ -101,8 +101,8 @@ func StringDeserializer(ctx *thriftext.ThreadCtx, raw []byte, constructor Constr
 	return string(raw), nil
 }
 
-func LoadStringWatchedNode(client curator.CuratorFramework, path string) (*ZkWatchedNode, error) {
-	return LoadZkWatchedNode(client, path, nil, StringSerializer, StringDeserializer)
+func LoadStringWatchedNode(client curator.CuratorFramework, path string, requireData bool) (*ZkWatchedNode, error) {
+	return LoadZkWatchedNode(client, path, nil, StringSerializer, StringDeserializer, requireData)
 }
 
 func NewStringWatchedNode(client curator.CuratorFramework, mode curator.CreateMode, path string, initialValue string) (*ZkWatchedNode, error) {

@@ -1,7 +1,7 @@
 package thriftext
 
 type DataListener interface {
-	OnDataChange(newVal interface{})
+	OnDataChange(newVal interface{}) (err error)
 }
 
 type DataChangeNotifier interface {
@@ -17,8 +17,9 @@ type Adapter struct {
 	Notifier DataChangeNotifier
 }
 
-func (t *Adapter) OnDataChange(newVal interface{}) {
+func (t *Adapter) OnDataChange(newVal interface{}) (err error) {
 	t.Notifier.OnChange()
+	return nil
 }
 
 type MultiNotifier struct {

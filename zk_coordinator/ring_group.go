@@ -10,6 +10,7 @@ import (
 	"github.com/LiveRamp/hank-go-client/curatorext"
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
+	"fmt"
 )
 
 const CLIENT_ROOT string = "c"
@@ -56,11 +57,13 @@ func loadZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, 
 
 	err := curatorext.AssertExists(client, rgRootPath)
 	if err != nil {
+		fmt.Println("Error asserting zk rg path exists")
 		return nil, err
 	}
 
 	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), listener, loadClientMetadata)
 	if err != nil {
+		fmt.Println("Error loading zk clients")
 		return nil, err
 	}
 
@@ -68,6 +71,10 @@ func loadZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, 
 	multiListener.AddClient(listener)
 
 	rings, err := curatorext.NewZkWatchedMap(client, rgRootPath, multiListener, loadZkRing)
+	if err != nil {
+		fmt.Println("Error loading zk ring")
+		return nil, err
+	}
 
 	return &ZkRingGroup{ringGroupPath: rgRootPath, client: client, clients: clients, rings: rings, localNotifier: multiListener}, nil
 }
@@ -133,9 +140,12 @@ func (p *ZkRingGroup) GetRing(ringNum iface.RingID) iface.Ring {
 func (p *ZkRingGroup) GetRings() []iface.Ring {
 
 	rings := []iface.Ring{}
-	for _, item := range p.rings.Values() {
-		i := item.(iface.Ring)
-		rings = append(rings, i)
+
+	if p.rings != nil {
+		for _, item := range p.rings.Values() {
+			i := item.(iface.Ring)
+			rings = append(rings, i)
+		}
 	}
 
 	return rings

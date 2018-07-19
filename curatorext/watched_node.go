@@ -92,10 +92,10 @@ func NewZkWatchedNode(
 		return nil, err
 	}
 
-	return LoadZkWatchedNode(client, path, constuctor, serializer, deserializer)
+	return LoadZkWatchedNode(client, path, constuctor, serializer, deserializer, true)
 }
 
-func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor Constructor, serializer Serializer, deserializer Deserializer) (*ZkWatchedNode, error) {
+func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor Constructor, serializer Serializer, deserializer Deserializer, requireData bool) (*ZkWatchedNode, error) {
 
 	//  TODO we might need a pool of these -- evaluate in production.  in a more civilized world, we'd just use a ThreadLocal
 	ctx := thriftext.NewThreadCtx()
@@ -115,7 +115,18 @@ func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor
 	watchedNode.node = node
 
 	backoffStrat := backoff.NewExponentialBackOff()
-	backoffStrat.MaxElapsedTime = time.Second * 10
+	backoffStrat.MaxElapsedTime = time.Second * 4
+
+	//	IF we don't require the node to exist, AND the path definitely doesn't exist, return early
+	if !requireData {
+		stat, err := client.CheckExists().ForPath(path)
+		if err != nil {
+			return nil, err
+		}
+		if stat == nil {
+			return watchedNode, nil
+		}
+	}
 
 	err = backoff.Retry(func() error {
 		res := watchedNode.value != nil
@@ -139,12 +150,27 @@ func (p *ZkWatchedNode) Get() interface{} {
 func (p *ZkWatchedNode) Set(ctx *thriftext.ThreadCtx,
 	value interface{}) error {
 
+
 	bytes, err := p.serializer(ctx, value)
 	if err != nil {
 		return err
 	}
 
+	exists, err := p.client.CheckExists().ForPath(p.path)
+	if err != nil {
+		return err
+	}
+
+	if exists == nil {
+		p.client.Create().ForPath(p.path)
+	}
+
 	_, err = p.client.SetData().ForPathWithData(p.path, bytes)
+	return err
+}
+
+func (p *ZkWatchedNode) Delete() error {
+	err := p.client.Delete().ForPath(p.path)
 	return err
 }
 

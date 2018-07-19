@@ -87,6 +87,7 @@ func New(
 	metadata, err := GetClientMetadata()
 
 	if err != nil {
+		fmt.Println("Error fetching client metadata")
 		return nil, err
 	}
 
@@ -94,6 +95,7 @@ func New(
 	registerErr := ringGroup.RegisterClient(ctx, metadata)
 
 	if registerErr != nil {
+		fmt.Println("Error registering client")
 		return nil, registerErr
 	}
 
@@ -120,10 +122,16 @@ func New(
 		connectionCacheLock,
 	}
 
-	client.updateConnectionCache(ctx)
+	//	if we can't build a proper cache when first instantiating the client, fail out hard.
+	//	once you're running later, we don't want to do this
+	err = client.updateConnectionCache(ctx)
+	if err != nil {
+		fmt.Println("Error updating connection cache")
+		return nil, err
+	}
 
-	go client.updateLoop(&stopping, connectionCacheLock)
-	go client.runtimeStatsLoop(&stopping)
+	go client.updateLoop(connectionCacheLock)
+	go client.runtimeStatsLoop()
 
 	ringGroup.AddListener(client)
 
@@ -134,14 +142,15 @@ func (p *HankSmartClient) OnChange() {
 	p.cacheUpdateLock.Release()
 }
 
-func (p *HankSmartClient) updateLoop(stopping *bool, listenerLock *syncext.SingleLockSemaphore) {
+func (p *HankSmartClient) updateLoop(listenerLock *syncext.SingleLockSemaphore) {
 
 	ctx := thriftext.NewThreadCtx()
 
 	for true {
+
 		listenerLock.Read()
 
-		if *stopping {
+		if *p.stopping {
 			fmt.Println("Exiting cache update routine ")
 			break
 		}
@@ -151,13 +160,13 @@ func (p *HankSmartClient) updateLoop(stopping *bool, listenerLock *syncext.Singl
 
 }
 
-func (p *HankSmartClient) runtimeStatsLoop(stopping *bool) {
+func (p *HankSmartClient) runtimeStatsLoop() {
 
 	lastCheck := time.Now().UnixNano()
 
 	for true {
 
-		if *stopping {
+		if *p.stopping {
 			fmt.Println("Exiting stats loop")
 			break
 		}
@@ -204,7 +213,7 @@ func (p *HankSmartClient) runtimeStatsLoop(stopping *bool) {
 
 func (p *HankSmartClient) Stop() {
 
-	p.stopping = newFalse()
+	p.stopping = newTrue()
 	p.cacheUpdateLock.Release()
 
 	for _, value := range p.domainToPartToConnections {
@@ -216,6 +225,7 @@ func (p *HankSmartClient) Stop() {
 			}
 		}
 	}
+
 }
 
 func newFalse() *bool {
@@ -240,13 +250,19 @@ func GetClientMetadata() (*hank.ClientMetadata, error) {
 	return metadata, nil
 }
 
-func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) {
+func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error {
 	fmt.Println("Loading Hank's smart client metadata cache and connections.")
 
 	newServerToConnections := make(map[string]*HostConnectionPool)
 	newDomainToPartitionToConnections := make(map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool)
 
-	p.buildNewConnectionCache(ctx, newServerToConnections, newDomainToPartitionToConnections)
+	err := p.buildNewConnectionCache(ctx, newServerToConnections, newDomainToPartitionToConnections)
+
+	if err != nil || len(newServerToConnections) == 0 {
+		fmt.Printf("Error building new connection cache:")
+		fmt.Println(err)
+		return err
+	}
 
 	oldServerToConnections := p.serverToConnections
 
@@ -264,6 +280,7 @@ func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) {
 		}
 	}
 
+	return nil
 }
 
 func noSuchDomain() *hank.HankResponse {
@@ -450,29 +467,53 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 			if pool == nil {
 
-				hostConnections := []*HostConnection{}
-
 				fmt.Println("Establishing " + strconv.Itoa(int(opts.NumConnectionsPerHost)) + " connections to " + host.GetAddress().Print() +
 					"with connection try lock timeout = " + strconv.Itoa(int(opts.TryLockTimeoutMs)) + "ms, " +
 					"connection establisment timeout = " + strconv.Itoa(int(opts.EstablishConnectionTimeoutMs)) + "ms, " +
 					"query timeout = " + strconv.Itoa(int(opts.QueryTimeoutMs)) + "ms")
 
-				for i := 1; i <= int(opts.NumConnectionsPerHost); i++ {
+				var wg sync.WaitGroup
+				wg.Add(int(opts.NumConnectionsPerHost))
 
-					connection := NewHostConnection(
-						host,
-						opts.TryLockTimeoutMs,
-						opts.EstablishConnectionTimeoutMs,
-						opts.QueryTimeoutMs,
-						opts.BulkQueryTimeoutMs,
-					)
+				connections := make(chan *HostConnection, int(opts.NumConnectionsPerHost))
 
-					host.AddStateChangeListener(connection)
+				for i := 0; i < int(opts.NumConnectionsPerHost); i++ {
+					go func() {
+						defer wg.Done()
+
+						connection, err := NewHostConnection(
+							host,
+							opts.TryLockTimeoutMs,
+							opts.EstablishConnectionTimeoutMs,
+							opts.EstablishConnectionRetries,
+							opts.QueryTimeoutMs,
+							opts.BulkQueryTimeoutMs,
+						)
+
+						if err == nil {
+							connections <- connection
+						} else {
+							fmt.Println("Error connecting to host:")
+							fmt.Println(err)
+						}
+
+					}()
+				}
+
+				fmt.Println("Waiting for connections to complete")
+				wg.Wait()
+
+				close(connections)
+
+				var hostConnections []*HostConnection
+
+				for connection := range connections {
 					hostConnections = append(hostConnections, connection)
-
+					host.AddStateChangeListener(connection)
 				}
 
 				pool, err = CreateHostConnectionPool(hostConnections, NO_SEED, preferredHosts)
+
 				if err != nil {
 					return err
 				}
@@ -487,9 +528,15 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 		for partitionID, addresses := range connections {
 
-			connections := []*HostConnection{}
+			var connections []*HostConnection
 			for _, address := range addresses {
 				connections = append(connections, newServerToConnections[address.Print()].GetConnections()...)
+			}
+
+			servingConnections := countServingConnections(connections)
+
+			if servingConnections < int(p.options.MinConnectionsPerPartition) {
+				return errors.New(fmt.Sprintf("Could not establish %v connections to partition %v for domain %v", p.options.MinConnectionsPerPartition, partitionID, domainID))
 			}
 
 			partitionToConnections[partitionID], err = CreateHostConnectionPool(connections,
@@ -503,6 +550,17 @@ func (p *HankSmartClient) buildNewConnectionCache(
 	}
 
 	return nil
+}
+
+func countServingConnections(connections []*HostConnection) int {
+
+	connected := 0
+	for _, connection := range connections {
+		if !connection.IsDisconnected() {
+			connected++
+		}
+	}
+	return connected
 }
 
 func getHostListShuffleSeed(domainId iface.DomainID, partitionId iface.PartitionID) int64 {

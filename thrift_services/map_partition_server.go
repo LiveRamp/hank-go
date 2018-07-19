@@ -68,13 +68,13 @@ func Serve(
 	handler hank.PartitionServer,
 	transportFactory thrift.TTransportFactory,
 	protocolFactory thrift.TProtocolFactory,
-	addr string) (*thrift.TSimpleServer, func()) {
+	addr string) (*TSimpleServer, func()) {
 
 	var transport, _ = thrift.NewTServerSocket(addr)
 
 	fmt.Printf("%T\n", transport)
 	processor := hank.NewPartitionServerProcessor(handler)
-	server := thrift.NewTSimpleServer4(processor, transport, transportFactory, protocolFactory)
+	server := NewTSimpleServer4(processor, transport, transportFactory, protocolFactory)
 
 	fmt.Println("Starting the simple server... on ", addr)
 

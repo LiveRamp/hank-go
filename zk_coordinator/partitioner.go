@@ -9,7 +9,7 @@ func (p *Murmur64Partitioner) Partition(key []byte, numPartitions int32) int32 {
 	return abs(int32(MurmurHash64(key, SEED)) % int32(numPartitions))
 }
 
-func abs(partition int32) int32{
+func abs(partition int32) int32 {
 
 	if partition < 0 {
 		return -partition
@@ -24,7 +24,7 @@ func MurmurHash64(data []byte, seed int) (h int64) {
 	r := 47
 
 	len := len(data)
-	hTemp := int64(uint64(seed) ^ uint64(int(len) * int(M)))
+	hTemp := int64(uint64(seed) ^ uint64(int(len)*int(M)))
 
 	remainder := len & 7
 
@@ -58,38 +58,38 @@ func MurmurHash64(data []byte, seed int) (h int64) {
 		k = k ^ int64(uint64(k)>>uint64(r))
 		k = k * M
 
-		hTemp  = int64(uint64(hTemp) ^ uint64(k))
+		hTemp = int64(uint64(hTemp) ^ uint64(k))
 
 		hTemp = M * hTemp
 	}
 
 	switch remainder {
 	case 7:
-		hTemp = int64(uint64(hTemp) ^ uint64(uint64(uint8(data[end+6]) & uint8(0xff)) << uint(48)))
+		hTemp = int64(uint64(hTemp) ^ uint64(uint64(uint8(data[end+6])&uint8(0xff))<<uint(48)))
 		fallthrough
 	case 6:
-		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+5]) & uint8(0xff)) << uint(40))))
+		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+5])&uint8(0xff))<<uint(40))))
 		fallthrough
 	case 5:
-		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+4]) & uint8(0xff)) << uint(32))))
+		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+4])&uint8(0xff))<<uint(32))))
 		fallthrough
 	case 4:
-		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+3]) & uint8(0xff)) << uint(24))))
+		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+3])&uint8(0xff))<<uint(24))))
 		fallthrough
 	case 3:
-		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+2]) & uint8(0xff)) << uint(16))))
+		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+2])&uint8(0xff))<<uint(16))))
 		fallthrough
 	case 2:
-		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+1]) & uint8(0xff)) << uint(8))))
+		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end+1])&uint8(0xff))<<uint(8))))
 		fallthrough
 	case 1:
-		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end]) & uint8(0xff)))))
+		hTemp = int64(uint64(hTemp) ^ uint64(int64(uint64(uint8(data[end])&uint8(0xff)))))
 		hTemp = hTemp * M
 	}
 
-	hTemp = hTemp ^ int64(uint64(hTemp) >> uint(r))
+	hTemp = hTemp ^ int64(uint64(hTemp)>>uint(r))
 	hTemp = int64(hTemp) * M
-	hTemp = hTemp ^ int64(uint64(hTemp) >> uint64(r))
+	hTemp = hTemp ^ int64(uint64(hTemp)>>uint64(r))
 
 	return int64(hTemp)
 }
