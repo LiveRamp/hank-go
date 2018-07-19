@@ -115,7 +115,7 @@ func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor
 	watchedNode.node = node
 
 	backoffStrat := backoff.NewExponentialBackOff()
-	backoffStrat.MaxElapsedTime = time.Second * 10
+	backoffStrat.MaxElapsedTime = time.Second * 4
 
 	err = backoff.Retry(func() error {
 		res := watchedNode.value != nil
