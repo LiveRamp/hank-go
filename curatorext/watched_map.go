@@ -115,9 +115,11 @@ func NewZkWatchedMap(
 
 	ctx := thriftext.NewThreadCtx()
 	for _, element := range initialChildren {
-		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, path.Join(root, element))
+		child := path.Join(root, element)
+		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, child)
 		if err != nil {
-			return nil, err
+			//	avoid failing out here in case of ephemeral nodes ex which represent dead hosts
+			fmt.Println(fmt.Sprintf("Error loading initial child: %v", child))
 		}
 	}
 
