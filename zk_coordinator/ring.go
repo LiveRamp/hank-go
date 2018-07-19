@@ -1,7 +1,6 @@
 package zk_coordinator
 
 import (
-	"fmt"
 	"path"
 	"regexp"
 	"strconv"
@@ -50,8 +49,6 @@ func loadZkRing(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, liste
 
 func createZkRing(ctx *thriftext.ThreadCtx, root string, num iface.RingID, listener thriftext.DataChangeNotifier, client curator.CuratorFramework) (*ZkRing, error) {
 	curatorext.CreateWithParents(client, curator.PERSISTENT, root, nil)
-
-	fmt.Println("Created via creation")
 
 	hosts, err := curatorext.NewZkWatchedMap(client, path.Join(root, HOSTS_PATH_SEGMENT), listener, loadZkHost)
 	if err != nil {

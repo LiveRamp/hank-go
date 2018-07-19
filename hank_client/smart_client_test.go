@@ -246,6 +246,46 @@ func TestIt(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
+func TestDeadHost(t *testing.T){
+	cluster, client := fixtures.SetupZookeeper(t)
+
+	ctx := thriftext.NewThreadCtx()
+
+	coord, _ := zk_coordinator.NewZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+
+	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
+
+	rg1, _ := coord.AddRingGroup(ctx, "rg1")
+	ring1, _ := rg1.AddRing(ctx, iface.RingID(0))
+
+	host0, _ := ring1.AddHost(ctx, "localhost", 12345, []string{})
+	host0Domain, _ := host0.AddDomain(ctx, domain0)
+	host0Domain.AddPartition(ctx, iface.PartitionID(0))
+
+	host0.SetState(ctx, iface.HOST_OFFLINE)
+
+	coord2, err := zk_coordinator.NewZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, coord2)
+
+	hosts := coord2.GetRingGroup("rg1").GetRing(0).GetHosts(ctx)
+
+	assert.Equal(t, iface.HOST_OFFLINE, hosts[0].GetState())
+	assert.Equal(t, 1, len(hosts))
+
+	fixtures.TeardownZookeeper(cluster, client)
+}
+
+
 //	verify that the client fails fast when it's not able to connect to enough partition servers during creation.
 //	relies on SetMinConnectionsPerPartition being set in the options
 func TestFailConnect(t *testing.T) {
@@ -316,7 +356,6 @@ func TestFailConnect(t *testing.T) {
 	close1()
 
 	fixtures.TeardownZookeeper(cluster, client)
-
 }
 
 //	test that we skip rebuilding the connection cache if we aren't able to get the connections we need for

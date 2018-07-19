@@ -99,7 +99,8 @@ func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, liste
 	assignments.AddListener(adapter)
 
 	state, err := curatorext.LoadStringWatchedNode(client,
-		path.Join(rootPath, STATE_PATH))
+		path.Join(rootPath, STATE_PATH), false)
+
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +235,14 @@ func (p *ZkHost) SetEnvironmentFlags(ctx *thriftext.ThreadCtx, flags map[string]
 }
 
 func (p *ZkHost) SetState(ctx *thriftext.ThreadCtx, state iface.HostState) error {
-	return p.state.Set(ctx, string(state))
+
+	//	this matches the Java implementation now
+	if state == iface.HOST_OFFLINE {
+		return p.state.Delete()
+	}else {
+		return p.state.Set(ctx, string(state))
+	}
+
 }
 
 func (p *ZkHost) GetState() iface.HostState {
