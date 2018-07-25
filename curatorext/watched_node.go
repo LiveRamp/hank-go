@@ -12,7 +12,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/thriftext"
 
 	log "github.com/sirupsen/logrus"
-
 )
 
 type Constructor func() interface{}
@@ -151,7 +150,6 @@ func (p *ZkWatchedNode) Get() interface{} {
 
 func (p *ZkWatchedNode) Set(ctx *thriftext.ThreadCtx,
 	value interface{}) error {
-
 
 	bytes, err := p.serializer(ctx, value)
 	if err != nil {

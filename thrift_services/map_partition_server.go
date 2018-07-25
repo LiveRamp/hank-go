@@ -7,7 +7,6 @@ import (
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 
 	log "github.com/sirupsen/logrus"
-
 )
 
 type MapPartitionServerHandler struct {

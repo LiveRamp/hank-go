@@ -122,7 +122,7 @@ func NewZkWatchedMap(
 		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, child)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"root": root,
+				"root":  root,
 				"child": child,
 			}).Error("Error loading initial child")
 			return nil, err

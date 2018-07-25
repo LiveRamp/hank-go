@@ -11,7 +11,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/fixtures"
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
-
 )
 
 func TestZkCoordinator(t *testing.T) {

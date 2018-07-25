@@ -193,9 +193,9 @@ func (p *HankSmartClient) runtimeStatsLoop() {
 
 			if locked > 0 {
 				log.WithFields(log.Fields{
-					"host": server,
+					"host":   server,
 					"locked": locked,
-					"total": total,
+					"total":  total,
 				}).Debug("Client connection load")
 			}
 
@@ -366,7 +366,7 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 		if parts == nil {
 
 			log.WithFields(log.Fields{
-				"domain": domain.GetName(),
+				"domain":    domain.GetName(),
 				"domain_id": domainID,
 			}).Error("could not find domain in partition map")
 
@@ -378,7 +378,7 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 		if pool == nil {
 
 			log.WithFields(log.Fields{
-				"domain": domain.GetName(),
+				"domain":    domain.GetName(),
 				"partition": partition,
 			}).Error("could not find list of hosts for domain partition")
 
@@ -450,12 +450,11 @@ func (p *HankSmartClient) buildNewConnectionCache(
 				"host": hostAddress,
 			}).Info("Loading partition metadata for host")
 
-
 			for _, hostDomain := range host.GetAssignedDomains(ctx) {
 
 				domain, err := hostDomain.GetDomain(ctx, p.coordinator)
 				log.WithFields(log.Fields{
-					"host": hostAddress,
+					"host":   hostAddress,
 					"domain": domain.GetName(),
 				}).Info("Found domain assigned to host")
 
@@ -499,11 +498,11 @@ func (p *HankSmartClient) buildNewConnectionCache(
 			if pool == nil {
 
 				log.WithFields(log.Fields{
-					"NumConnectionsPerHost": opts.NumConnectionsPerHost,
-					"TryLockTimeoutMs": opts.TryLockTimeoutMs,
+					"NumConnectionsPerHost":        opts.NumConnectionsPerHost,
+					"TryLockTimeoutMs":             opts.TryLockTimeoutMs,
 					"EstablishConnectionTimeoutMs": opts.EstablishConnectionTimeoutMs,
-					"QueryTimeoutMs": opts.QueryTimeoutMs,
-					"host": hostAddress,
+					"QueryTimeoutMs":               opts.QueryTimeoutMs,
+					"host":                         hostAddress,
 				}).Info("Establishing connections to host")
 
 				var wg sync.WaitGroup

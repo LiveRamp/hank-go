@@ -12,7 +12,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/thrift_services"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
-
 )
 
 func TestSmartClient(t *testing.T) {
@@ -242,7 +241,7 @@ func TestIt(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
-func TestDeadHost(t *testing.T){
+func TestDeadHost(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
 	ctx := thriftext.NewThreadCtx()
@@ -280,7 +279,6 @@ func TestDeadHost(t *testing.T){
 
 	fixtures.TeardownZookeeper(cluster, client)
 }
-
 
 //	verify that the client fails fast when it's not able to connect to enough partition servers during creation.
 //	relies on SetMinConnectionsPerPartition being set in the options

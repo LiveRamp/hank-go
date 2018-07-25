@@ -13,7 +13,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/thriftext"
 
 	log "github.com/sirupsen/logrus"
-
 )
 
 func WaitUntilOrErr(expectTrue func() bool) error {

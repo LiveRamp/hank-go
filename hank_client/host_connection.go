@@ -12,7 +12,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/syncext"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	log "github.com/sirupsen/logrus"
-
 )
 
 type HostConnection struct {
@@ -21,7 +20,7 @@ type HostConnection struct {
 
 	tryLockTimeoutMs             int32
 	establishConnectionTimeoutMs int32
-	establishConnectionRetries  int32
+	establishConnectionRetries   int32
 	queryTimeoutMs               int32
 	bulkQueryTimeoutMs           int32
 
@@ -46,7 +45,7 @@ func NewHostConnection(
 		host:                         host,
 		tryLockTimeoutMs:             tryLockTimeoutMs,
 		establishConnectionTimeoutMs: establishConnectionTimeoutMs,
-		establishConnectionRetries:  establishConnectionRetries,
+		establishConnectionRetries:   establishConnectionRetries,
 		queryTimeoutMs:               queryTimeoutMs,
 		bulkQueryTimeoutMs:           bulkQueryTimeoutMs,
 		lock:                         syncext.NewMutex(),

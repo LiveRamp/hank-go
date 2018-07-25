@@ -11,9 +11,7 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
 
-
 	log "github.com/sirupsen/logrus"
-
 )
 
 func WaitUntilOrFail(t *testing.T, expectTrue func() bool) error {

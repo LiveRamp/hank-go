@@ -38,12 +38,10 @@ func NewHankSmartClientOptions() *hankSmartClientOptions {
 	}
 }
 
-
 func (p *hankSmartClientOptions) SetEstablishConnectionRetries(retries int32) *hankSmartClientOptions {
 	p.EstablishConnectionRetries = retries
 	return p
 }
-
 
 func (p *hankSmartClientOptions) SetResponseCacheExpiryTime(time time.Duration) *hankSmartClientOptions {
 	p.ResponseCacheExpiryTime = time

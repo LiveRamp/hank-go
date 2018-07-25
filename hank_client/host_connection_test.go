@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-
-
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +16,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 	log "github.com/sirupsen/logrus"
 )
-
 
 func TestQueryWhenServing(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)

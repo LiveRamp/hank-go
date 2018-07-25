@@ -13,7 +13,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 
 	log "github.com/sirupsen/logrus"
-
 )
 
 const NO_HASH = -1
@@ -289,12 +288,12 @@ func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isL
 	if connection == nil {
 
 		log.WithFields(log.Fields{
-			"num_tries": numTries,
+			"num_tries":     numTries,
 			"max_num_tries": maxNumTries,
-			"domain": domain.GetName(),
-			"key": hex.EncodeToString(key),
-			"local_pools": p.preferredPools,
-			"other_pools": p.otherPools,
+			"domain":        domain.GetName(),
+			"key":           hex.EncodeToString(key),
+			"local_pools":   p.preferredPools,
+			"other_pools":   p.otherPools,
 		}).Error("No connection is available.  Giving up.")
 
 		return NoConnectionAvailableResponse()
@@ -311,11 +310,11 @@ func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isL
 			if numTries < maxNumTries {
 
 				log.WithFields(log.Fields{
-					"host": connection.connection.host.GetAddress(),
-					"num_tries": numTries,
+					"host":          connection.connection.host.GetAddress(),
+					"num_tries":     numTries,
 					"max_num_tries": maxNumTries,
-					"domain": domain.GetName(),
-					"key": hex.EncodeToString(key),
+					"domain":        domain.GetName(),
+					"key":           hex.EncodeToString(key),
 				}).WithError(err).Error("Failed to perform query, retrying")
 
 				return nil
@@ -323,11 +322,11 @@ func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isL
 			} else {
 
 				log.WithFields(log.Fields{
-					"host": connection.connection.host.GetAddress(),
-					"num_tries": numTries,
+					"host":          connection.connection.host.GetAddress(),
+					"num_tries":     numTries,
 					"max_num_tries": maxNumTries,
-					"domain": domain.GetName(),
-					"key": hex.EncodeToString(key),
+					"domain":        domain.GetName(),
+					"key":           hex.EncodeToString(key),
 				}).WithError(err).Error("Failed to perform query, giving up")
 
 				return FailedRetriesResponse(numTries)

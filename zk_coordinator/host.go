@@ -15,7 +15,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/thriftext"
 
 	log "github.com/sirupsen/logrus"
-
 )
 
 const ASSIGNMENTS_PATH string = "a"
@@ -241,7 +240,7 @@ func (p *ZkHost) SetState(ctx *thriftext.ThreadCtx, state iface.HostState) error
 	//	this matches the Java implementation now
 	if state == iface.HOST_OFFLINE {
 		return p.state.Delete()
-	}else {
+	} else {
 		return p.state.Set(ctx, string(state))
 	}
 

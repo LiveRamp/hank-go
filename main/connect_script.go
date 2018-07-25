@@ -10,7 +10,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 
 	log "github.com/sirupsen/logrus"
-
 )
 
 func main() {

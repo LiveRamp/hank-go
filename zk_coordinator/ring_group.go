@@ -11,7 +11,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	log "github.com/sirupsen/logrus"
-
 )
 
 const CLIENT_ROOT string = "c"

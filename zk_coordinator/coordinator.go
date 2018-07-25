@@ -9,7 +9,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	log "github.com/sirupsen/logrus"
-
 )
 
 const KEY_DOMAIN_ID_COUNTER string = ".domain_id_counter"
