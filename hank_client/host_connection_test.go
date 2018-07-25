@@ -1,10 +1,11 @@
 package hank_client
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 	"time"
+
+
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
@@ -15,14 +16,16 @@ import (
 	"github.com/LiveRamp/hank-go-client/thrift_services"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	log "github.com/sirupsen/logrus"
 )
+
 
 func TestQueryWhenServing(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 	ctx := thriftext.NewThreadCtx()
 	host, err := zk_coordinator.CreateZkHost(ctx, client, &thriftext.NoOp{}, "/hank/host/host1", "127.0.0.1", 12345, []string{})
 	if err != nil {
-		fmt.Println(err)
+		log.WithError(err).Error("error creating host")
 		t.Fail()
 	}
 
@@ -86,7 +89,7 @@ func TestTimeouts(t *testing.T) {
 	ctx := thriftext.NewThreadCtx()
 	host, err := zk_coordinator.CreateZkHost(ctx, client, &thriftext.NoOp{}, "/hank/host/host1", "127.0.0.1", 12345, []string{})
 	if err != nil {
-		fmt.Println(err)
+		log.WithError(err).Error("error creating zk host")
 		t.Fail()
 	}
 

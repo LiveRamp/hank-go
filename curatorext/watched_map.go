@@ -1,13 +1,15 @@
 package curatorext
 
 import (
-	"fmt"
 	"path"
 
 	"github.com/curator-go/curator"
 	"github.com/curator-go/curator/recipes/cache"
 
 	"github.com/LiveRamp/hank-go-client/thriftext"
+
+	log "github.com/sirupsen/logrus"
+
 	"sync"
 )
 
@@ -45,7 +47,7 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 			err := conditionalInsert(p.ctx, client, p.loader, p.listener, p.lock, p.internalData, fullChildPath)
 			p.listener.OnChange()
 			if err != nil {
-				fmt.Println("Error inserting child: ", err)
+				log.WithError(err).WithField("root", p.root).Error("Error inserting child")
 				return err
 			}
 		}
@@ -119,7 +121,10 @@ func NewZkWatchedMap(
 		child := path.Join(root, element)
 		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, child)
 		if err != nil {
-			fmt.Println(fmt.Sprintf("Error loading initial child: %v", child))
+			log.WithFields(log.Fields{
+				"root": root,
+				"child": child,
+			}).Error("Error loading initial child")
 			return nil, err
 		}
 	}

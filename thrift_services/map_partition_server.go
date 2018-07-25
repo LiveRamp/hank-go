@@ -1,11 +1,13 @@
 package thrift_services
 
 import (
-	"fmt"
 	"sync"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
+
+	log "github.com/sirupsen/logrus"
+
 )
 
 type MapPartitionServerHandler struct {
@@ -71,12 +73,10 @@ func Serve(
 	addr string) (*TSimpleServer, func()) {
 
 	var transport, _ = thrift.NewTServerSocket(addr)
-
-	fmt.Printf("%T\n", transport)
 	processor := hank.NewPartitionServerProcessor(handler)
 	server := NewTSimpleServer4(processor, transport, transportFactory, protocolFactory)
 
-	fmt.Println("Starting the simple server... on ", addr)
+	log.WithField("addr", addr).Info("Starting simple server")
 
 	var wg sync.WaitGroup
 	wg.Add(1)

@@ -1,7 +1,6 @@
 package hank_client
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 
@@ -368,7 +367,6 @@ func TestOneHanging(t *testing.T) {
 	previousIface1NumGets := 0
 
 	for i := 0; i < 10; i++ {
-		fmt.Println("\n")
 		val := pool.Get(domain, Key1(), 1, NO_HASH)
 		if val.IsSetValue() {
 			numHits++
@@ -396,7 +394,6 @@ func TestOneHanging(t *testing.T) {
 	numHits = 0
 
 	for i := 0; i < 10; i++ {
-		fmt.Println("\n")
 		val := pool.Get(domain, Key1(), 2, NO_HASH)
 		if val.IsSetValue() {
 			numHits++
@@ -463,12 +460,6 @@ func TestConsistentHashing(t *testing.T) {
 
 		allOne := (handler1.numGets == 20 && handler2.numGets == 0) || (handler1.numGets == 0 && handler2.numGets == 20)
 
-		if !allOne {
-			fmt.Println("\n")
-			fmt.Println(handler1.numGets)
-			fmt.Println(handler2.numGets)
-		}
-
 		assert.True(t, allOne)
 		assert.True(t, numHits == 20)
 
@@ -489,7 +480,6 @@ func TestConsistentHashing(t *testing.T) {
 func queryKey(pool *HostConnectionPool, domain iface.Domain, t *testing.T, times int, numTries int32, expected string) int {
 	numHits := 0
 	for i := 0; i < times; i++ {
-		fmt.Println("\n")
 		val := pool.Get(domain, Key1(), numTries, NO_HASH)
 		if val.IsSetValue() {
 			numHits++

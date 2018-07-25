@@ -11,7 +11,8 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/syncext"
 	"github.com/LiveRamp/hank-go-client/thriftext"
-	"strconv"
+	log "github.com/sirupsen/logrus"
+
 )
 
 type HostConnection struct {
@@ -143,10 +144,10 @@ func (p *HostConnection) Get(id iface.DomainID, key []byte, isLockHeld bool) (*h
 		p.Unlock()
 		return nil, err
 	} else if resp.IsSetXception() {
-		fmt.Println(resp.Xception)
+		log.WithField("exception", resp.Xception).Error("Exception from server")
 		p.Disconnect()
 		p.Unlock()
-		return nil, errors.New("Exception from server")
+		return nil, errors.New("exception from server")
 	}
 
 	p.Unlock()
@@ -161,7 +162,7 @@ func (p *HostConnection) connect() error {
 
 	err := framed.Open()
 	if err != nil {
-		fmt.Println(err)
+		log.WithError(err).Error("error connecting to host")
 		p.Disconnect()
 		return err
 	}
@@ -193,12 +194,14 @@ func (p *HostConnection) OnDataChange(newVal interface{}) (err error) {
 
 	disconnectErr := p.Disconnect()
 	if disconnectErr != nil {
-		fmt.Print("Error disconnecting: ", disconnectErr)
+		log.WithError(disconnectErr).Error("Error disconnecting")
 	}
 
 	if newState == iface.HOST_SERVING {
 
 		tries := int32(0)
+
+		hostName := p.host.GetAddress().Print()
 
 		for tries <= p.establishConnectionRetries {
 
@@ -208,14 +211,22 @@ func (p *HostConnection) OnDataChange(newVal interface{}) (err error) {
 				p.hostState = newState
 				return nil
 			} else {
-				fmt.Println("Error connecting to host "+p.host.GetAddress().Print()+" on attempt "+strconv.Itoa(int(tries))+".", err)
+				log.WithFields(log.Fields{
+					"host":    hostName,
+					"attempt": tries,
+				}).WithError(err).Error("error connecting to host")
 			}
 		}
 
-		msg := "Failed to connect to host " + p.host.GetAddress().Print() + " after " + strconv.Itoa(int(p.establishConnectionRetries)) + " retries.  Failing."
+		msg := fmt.Sprintf("Failed to connect to host %v after %v retries.  Failing.", hostName, p.establishConnectionRetries)
+		err := errors.New(msg)
 
-		fmt.Println(msg, err)
-		return errors.New(msg)
+		log.WithFields(log.Fields{
+			"host":    hostName,
+			"retries": p.establishConnectionRetries,
+		}).WithError(err).Error(msg)
+
+		return err
 
 	}
 

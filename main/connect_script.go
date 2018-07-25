@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -9,6 +8,9 @@ import (
 
 	"github.com/LiveRamp/hank-go-client/hank_client"
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+
+	log "github.com/sirupsen/logrus"
+
 )
 
 func main() {
@@ -18,13 +20,13 @@ func main() {
 
 	startErr := client.Start()
 	if startErr != nil {
-		fmt.Println(startErr)
+		log.WithError(startErr).Error("error creating curator client")
 		return
 	}
 
 	coordinator, coordErr := zk_coordinator.NewZkCoordinator(client, "/hank/domains", "/hank/ring_groups", "/hank/domain_groups")
 	if coordErr != nil {
-		fmt.Println(startErr)
+		log.WithError(coordErr).Error("error creating zk coordinator")
 		return
 	}
 
@@ -33,11 +35,9 @@ func main() {
 
 	smartClient, clientErr := hank_client.New(coordinator, "spruce-aws", options)
 	if clientErr != nil {
-		fmt.Println(clientErr)
+		log.WithError(clientErr).Error("error creating smart client")
 		return
 	}
-
-	fmt.Println(smartClient)
 
 	time.Sleep(time.Hour)
 
