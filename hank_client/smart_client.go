@@ -314,7 +314,7 @@ func (p *HankSmartClient) Get(domainName string, key []byte) (*hank.HankResponse
 	domain := p.coordinator.GetDomain(domainName)
 
 	if domain == nil {
-		fmt.Printf("No domain found: %v\n", domainName)
+		log.WithField("domain", domainName).Error("Domain not found")
 		return noSuchDomain(), nil
 	}
 
@@ -392,7 +392,13 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 		}
 
 		if response.IsSetXception() {
-			fmt.Printf("Failed to perform get: domain: %v partition; %v key; %v", domain, partition, key)
+
+			log.WithFields(log.Fields{
+				"domain": domain.GetName(),
+				"partition": partition,
+				"key": key,
+			}).Error("Failed to perform Get")
+
 		}
 
 		return response, nil
