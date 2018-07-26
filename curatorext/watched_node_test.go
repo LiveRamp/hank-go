@@ -1,7 +1,6 @@
 package curatorext
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -11,6 +10,8 @@ import (
 
 	"github.com/LiveRamp/hank-go-client/fixtures"
 	"github.com/LiveRamp/hank-go-client/thriftext"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func TestZkWatchedNode(t *testing.T) {
@@ -22,7 +23,7 @@ func TestZkWatchedNode(t *testing.T) {
 	)
 
 	if err != nil {
-		fmt.Println(err)
+		log.WithError(err).Error("error creating watched node")
 		t.Fail()
 	}
 

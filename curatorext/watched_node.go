@@ -2,7 +2,6 @@ package curatorext
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/cenkalti/backoff"
@@ -11,6 +10,8 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 
 	"github.com/LiveRamp/hank-go-client/thriftext"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Constructor func() interface{}
@@ -54,7 +55,7 @@ func (p *ObjLoader) ChildEvent(client curator.CuratorFramework, event cache.Tree
 
 		obj, err := p.watchedNode.deserializer(p.watchedNode.ctx, data.Data(), p.watchedNode.constructor)
 		if err != nil {
-			fmt.Printf("Error loading child at %v in ZkWatchedNode %v\n", event.Data.Path(), err)
+			log.WithField("child", event.Data.Path()).WithError(err).Error("Error loading watched node child")
 			return err
 		}
 
@@ -149,7 +150,6 @@ func (p *ZkWatchedNode) Get() interface{} {
 
 func (p *ZkWatchedNode) Set(ctx *thriftext.ThreadCtx,
 	value interface{}) error {
-
 
 	bytes, err := p.serializer(ctx, value)
 	if err != nil {

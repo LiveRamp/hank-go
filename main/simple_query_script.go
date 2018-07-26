@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -15,6 +14,8 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -27,8 +28,7 @@ func main() {
 
 	coordinator, coordErr := zk_coordinator.NewZkCoordinator(client, "/hank/domains", "/hank/ring_groups", "/hank/domain_groups")
 	if coordErr != nil {
-
-		fmt.Println(coordErr)
+		log.WithError(coordErr).Error("error creating coordinator")
 		return
 	}
 
@@ -43,7 +43,7 @@ func main() {
 	domain := coordinator.GetDomain(argsWithoutProg[1])
 	domainId := domain.GetId()
 
-	fmt.Println("Using domain: ", domain.GetName())
+	log.WithField("domain", domain.GetName()).Info("querying domain")
 
 	file, err := os.Open(argsWithoutProg[2])
 	if err != nil {
@@ -57,26 +57,26 @@ func main() {
 		bytes := scanner.Bytes()
 		text := string(bytes)
 
-		fmt.Println("Checking: ", text)
+		log.Info(fmt.Sprintf("Checking: %v", text))
 
 		bytes, err := hex.DecodeString(strings.TrimSpace(text))
 		if err != nil {
-			fmt.Println(err)
+			log.WithError(err).Error("error decoding string")
 			return
 		}
 
 		val, err := conn.Get(domainId, bytes, false)
 		if err != nil {
-			fmt.Println(err)
+			log.WithError(err).Error("error querying")
 			return
 		}
 
 		if val.Value != nil {
-			fmt.Println("Found value")
+			log.Info("Found value")
 			encodeToString := hex.EncodeToString(val.Value)
-			fmt.Println("Value: ", encodeToString)
+			log.WithField("value", encodeToString).Info("found value")
 		} else {
-			fmt.Println("Did not find value")
+			log.Info("did not find value")
 		}
 
 	}

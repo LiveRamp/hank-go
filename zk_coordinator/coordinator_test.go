@@ -1,7 +1,6 @@
 package zk_coordinator
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -42,7 +41,6 @@ func TestZkCoordinator(t *testing.T) {
 
 	//  make sure this one picked up the message
 	fixtures.WaitUntilOrFail(t, func() bool {
-		fmt.Println(zkCoordinator3)
 		domainGroup := zkCoordinator3.GetDomainGroup("group1")
 		return domainGroup != nil
 	})
@@ -97,8 +95,6 @@ func TestZkCoordinator(t *testing.T) {
 	fixtures.WaitUntilOrFail(t, func() bool {
 		return reflect.DeepEqual(host1Coord2.GetEnvironmentFlags(ctx), flags)
 	})
-
-	fmt.Println(host1Coord1)
 
 	domain1, _ := zkCoordinator.AddDomain(ctx, "domain0", 1, "", "", "", []string{})
 	zkCoordinator.AddDomain(ctx, "domain1", 1, "", "", "", []string{})

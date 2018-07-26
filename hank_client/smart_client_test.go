@@ -1,7 +1,6 @@
 package hank_client
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -43,13 +42,10 @@ func TestSmartClient(t *testing.T) {
 	})
 
 	ring, _ := rg.AddRing(ctx, 0)
-	host, _ := ring.AddHost(ctx, "127.0.0.1", 54321, []string{})
+	ring.AddHost(ctx, "127.0.0.1", 54321, []string{})
 
-	fmt.Println(ring)
-	fmt.Println(host)
-
-	fmt.Println(smartClient)
-	fmt.Println(smartClient2)
+	smartClient.Stop()
+	smartClient2.Stop()
 
 	fixtures.TeardownZookeeper(cluster, client)
 }
@@ -232,7 +228,6 @@ func TestIt(t *testing.T) {
 	//	make server 1 unreachable
 	fixtures.WaitUntilOrFail(t, func() bool {
 		updating, _ := smartClient.Get(domain0.GetName(), []byte("key1"))
-		fmt.Println(updating)
 		return reflect.DeepEqual("value1", string(updating.Value))
 	})
 
@@ -246,7 +241,7 @@ func TestIt(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
-func TestDeadHost(t *testing.T){
+func TestDeadHost(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
 	ctx := thriftext.NewThreadCtx()
@@ -284,7 +279,6 @@ func TestDeadHost(t *testing.T){
 
 	fixtures.TeardownZookeeper(cluster, client)
 }
-
 
 //	verify that the client fails fast when it's not able to connect to enough partition servers during creation.
 //	relies on SetMinConnectionsPerPartition being set in the options
@@ -414,7 +408,6 @@ func TestSkipConnectionCacheRebuild(t *testing.T) {
 	//	no seriously, zookeeper is dead
 	fixtures.WaitUntilOrFail(t, func() bool {
 		_, err := client.CheckExists().ForPath("/hank")
-		fmt.Println(err)
 		return err != nil
 	})
 

@@ -2,7 +2,6 @@ package curatorext
 
 import (
 	"errors"
-	"fmt"
 	"path"
 	"path/filepath"
 	"time"
@@ -12,6 +11,8 @@ import (
 	"github.com/curator-go/curator"
 
 	"github.com/LiveRamp/hank-go-client/thriftext"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func WaitUntilOrErr(expectTrue func() bool) error {
@@ -31,7 +32,7 @@ func WaitUntilOrErr(expectTrue func() bool) error {
 	}, backoffStrat)
 
 	if err == nil {
-		fmt.Println("Assertion success!")
+		log.Info("Assertion success!")
 	}
 
 	return err

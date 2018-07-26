@@ -3,7 +3,6 @@ package hank_client
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"math/rand"
 	"sort"
 	"sync"
@@ -12,6 +11,8 @@ import (
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 
 	"github.com/LiveRamp/hank-go-client/iface"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const NO_HASH = -1
@@ -285,9 +286,15 @@ func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isL
 	domainId := domain.GetId()
 
 	if connection == nil {
-		fmt.Printf("No connection is available.  Giving up with %v/%v attempts.  Domain = %v, Key = %v\n"+
-			"Local pools: %v\n"+
-			"Non-local pools: %v\n", numTries, maxNumTries, domain.GetName(), hex.EncodeToString(key), p.preferredPools, p.otherPools)
+
+		log.WithFields(log.Fields{
+			"num_tries":     numTries,
+			"max_num_tries": maxNumTries,
+			"domain":        domain.GetName(),
+			"key":           hex.EncodeToString(key),
+			"local_pools":   p.preferredPools,
+			"other_pools":   p.otherPools,
+		}).Error("No connection is available.  Giving up.")
 
 		return NoConnectionAvailableResponse()
 	} else {
@@ -302,29 +309,25 @@ func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isL
 
 			if numTries < maxNumTries {
 
-				fmt.Printf("Failed to perform query with host: %v\n"+
-					". Retrying.  Try %v/%v, Domain = %v, Key = %v, Error: %v\n",
-					connection.connection.host.GetAddress(),
-					numTries,
-					maxNumTries,
-					domain.GetName(),
-					hex.EncodeToString(key),
-					err,
-				)
+				log.WithFields(log.Fields{
+					"host":          connection.connection.host.GetAddress(),
+					"num_tries":     numTries,
+					"max_num_tries": maxNumTries,
+					"domain":        domain.GetName(),
+					"key":           hex.EncodeToString(key),
+				}).WithError(err).Error("Failed to perform query, retrying")
 
 				return nil
 
 			} else {
 
-				fmt.Printf("Failed to perform query with host: %v\n"+
-					". Giving up	.  Try %v/%v, Domain = %v, Key = %v, Error: %v\n",
-					connection.connection.host.GetAddress(),
-					numTries,
-					maxNumTries,
-					domain.GetName(),
-					hex.EncodeToString(key),
-					err,
-				)
+				log.WithFields(log.Fields{
+					"host":          connection.connection.host.GetAddress(),
+					"num_tries":     numTries,
+					"max_num_tries": maxNumTries,
+					"domain":        domain.GetName(),
+					"key":           hex.EncodeToString(key),
+				}).WithError(err).Error("Failed to perform query, giving up")
 
 				return FailedRetriesResponse(numTries)
 			}

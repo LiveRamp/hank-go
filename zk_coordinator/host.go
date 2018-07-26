@@ -1,7 +1,6 @@
 package zk_coordinator
 
 import (
-	"fmt"
 	"math/big"
 	"path"
 	"strconv"
@@ -14,6 +13,8 @@ import (
 	"github.com/LiveRamp/hank-go-client/curatorext"
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const ASSIGNMENTS_PATH string = "a"
@@ -45,7 +46,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 
 	node, err := curatorext.NewThriftWatchedNode(client, curator.PERSISTENT, rootPath, ctx, iface.NewHostMetadata, metadata)
 	if err != nil {
-		fmt.Println("Error creating host node at path: ", rootPath, err)
+		log.WithField("path", rootPath).WithError(err).Error("Error creating host node")
 		return nil, err
 	}
 
@@ -63,7 +64,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 		iface.NewHostAssignmentMetadata,
 		assignmentMetadata)
 	if err != nil {
-		fmt.Println("Error creating assignments node at path: ", assignmentsRoot, err)
+		log.WithField("path", assignmentsRoot).WithError(err).Error("Error creating assignments node")
 		return nil, err
 	}
 
@@ -75,7 +76,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 	state.AddListener(adapter)
 
 	if err != nil {
-		fmt.Println("Error creating state node at path: ", statePath, err)
+		log.WithField("path", statePath).WithError(err).Error("Error creating state node")
 		return nil, err
 	}
 
@@ -239,7 +240,7 @@ func (p *ZkHost) SetState(ctx *thriftext.ThreadCtx, state iface.HostState) error
 	//	this matches the Java implementation now
 	if state == iface.HOST_OFFLINE {
 		return p.state.Delete()
-	}else {
+	} else {
 		return p.state.Set(ctx, string(state))
 	}
 

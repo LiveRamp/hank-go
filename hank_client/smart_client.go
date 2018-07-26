@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 	"github.com/karlseguin/ccache"
 
@@ -87,7 +89,7 @@ func New(
 	metadata, err := GetClientMetadata()
 
 	if err != nil {
-		fmt.Println("Error fetching client metadata")
+		log.WithError(err).Error("error fetching client metadata")
 		return nil, err
 	}
 
@@ -95,7 +97,7 @@ func New(
 	registerErr := ringGroup.RegisterClient(ctx, metadata)
 
 	if registerErr != nil {
-		fmt.Println("Error registering client")
+		log.WithError(registerErr).Error("error registering client")
 		return nil, registerErr
 	}
 
@@ -126,7 +128,7 @@ func New(
 	//	once you're running later, we don't want to do this
 	err = client.updateConnectionCache(ctx)
 	if err != nil {
-		fmt.Println("Error updating connection cache")
+		log.WithError(err).Error("error updating connection cache")
 		return nil, err
 	}
 
@@ -151,7 +153,7 @@ func (p *HankSmartClient) updateLoop(listenerLock *syncext.SingleLockSemaphore) 
 		listenerLock.Read()
 
 		if *p.stopping {
-			fmt.Println("Exiting cache update routine ")
+			log.Info("exiting cache update routine")
 			break
 		}
 
@@ -167,7 +169,7 @@ func (p *HankSmartClient) runtimeStatsLoop() {
 	for true {
 
 		if *p.stopping {
-			fmt.Println("Exiting stats loop")
+			log.Info("exiting stats loop")
 			break
 		}
 
@@ -190,7 +192,11 @@ func (p *HankSmartClient) runtimeStatsLoop() {
 			locked := serverLockedConns[server]
 
 			if locked > 0 {
-				fmt.Printf("Load on connections to %v: %.2f %% (%v / %v locked connections)\n", server, float32(locked)/float32(total)*100, locked, total)
+				log.WithFields(log.Fields{
+					"host":   server,
+					"locked": locked,
+					"total":  total,
+				}).Debug("Client connection load")
 			}
 
 		}
@@ -202,7 +208,12 @@ func (p *HankSmartClient) runtimeStatsLoop() {
 		cacheHitRate := float64(cacheHits) / float64(requests)
 
 		if requests != 0 {
-			fmt.Printf("Throughput: %.2f queries / second, client-side cache hit rate: %v %%\n", throughput, cacheHitRate*100)
+
+			log.WithFields(log.Fields{
+				"throughput_qps": throughput,
+				"cache_hit_rate": cacheHitRate,
+			}).Debug("Client-side cache hit rate")
+
 		}
 
 		lastCheck = now
@@ -251,7 +262,7 @@ func GetClientMetadata() (*hank.ClientMetadata, error) {
 }
 
 func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error {
-	fmt.Println("Loading Hank's smart client metadata cache and connections.")
+	log.Info("Loading Hank's smart client metadata cache and connections.")
 
 	newServerToConnections := make(map[string]*HostConnectionPool)
 	newDomainToPartitionToConnections := make(map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool)
@@ -259,8 +270,7 @@ func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error 
 	err := p.buildNewConnectionCache(ctx, newServerToConnections, newDomainToPartitionToConnections)
 
 	if err != nil || len(newServerToConnections) == 0 {
-		fmt.Printf("Error building new connection cache:")
-		fmt.Println(err)
+		log.WithError(err).Error("Error building new connection cache")
 		return err
 	}
 
@@ -304,7 +314,7 @@ func (p *HankSmartClient) Get(domainName string, key []byte) (*hank.HankResponse
 	domain := p.coordinator.GetDomain(domainName)
 
 	if domain == nil {
-		fmt.Printf("No domain found: %v\n", domainName)
+		log.WithField("domain", domainName).Error("Domain not found")
 		return noSuchDomain(), nil
 	}
 
@@ -319,11 +329,11 @@ type Entry struct {
 func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankResponse, error) {
 
 	if key == nil {
-		return nil, errors.New("Null key")
+		return nil, errors.New("null key")
 	}
 
 	if len(key) == 0 {
-		return nil, errors.New("Empty key")
+		return nil, errors.New("empty key")
 	}
 
 	domainID := domain.GetId()
@@ -354,14 +364,24 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 		p.connectionLock.Unlock()
 
 		if parts == nil {
-			fmt.Printf("Could not find domain to partition map for domain %v (id: %v)]\n", domain.GetName(), domainID)
+
+			log.WithFields(log.Fields{
+				"domain":    domain.GetName(),
+				"domain_id": domainID,
+			}).Error("could not find domain in partition map")
+
 			return noReplica(), nil
 		}
 
 		pool := parts[iface.PartitionID(partition)]
 
 		if pool == nil {
-			fmt.Printf("Could not find list of hosts for domain %v, partition %v\n", domain.GetName(), partition)
+
+			log.WithFields(log.Fields{
+				"domain":    domain.GetName(),
+				"partition": partition,
+			}).Error("could not find list of hosts for domain partition")
+
 			return noReplica(), nil
 		}
 
@@ -372,7 +392,13 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 		}
 
 		if response.IsSetXception() {
-			fmt.Printf("Failed to perform get: domain: %v partition; %v key; %v", domain, partition, key)
+
+			log.WithFields(log.Fields{
+				"domain": domain.GetName(),
+				"partition": partition,
+				"key": key,
+			}).Error("Failed to perform Get")
+
 		}
 
 		return response, nil
@@ -382,8 +408,6 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 }
 
 func (p *HankSmartClient) isPreferredHost(ctx *thriftext.ThreadCtx, host iface.Host) bool {
-
-	fmt.Println("Environment flags for host ", host)
 
 	flags := host.GetEnvironmentFlags(ctx)
 
@@ -411,22 +435,34 @@ func (p *HankSmartClient) buildNewConnectionCache(
 	var err error
 
 	for _, ring := range p.ringGroup.GetRings() {
-		fmt.Println("Building connection cache for ", ring)
+		log.WithFields(log.Fields{
+			"ring": ring,
+		}).Info("Building connection cache for ring")
 
 		for _, host := range ring.GetHosts(ctx) {
-			fmt.Println("Building cache for host: ", host)
+			hostAddress := host.GetAddress().Print()
+
+			log.WithFields(log.Fields{
+				"host": hostAddress,
+			}).Info("Building cache for host")
 
 			if p.isPreferredHost(ctx, host) {
-				preferredHosts = append(preferredHosts, host.GetAddress().Print())
+				preferredHosts = append(preferredHosts, hostAddress)
 			}
 
 			address := host.GetAddress()
-			fmt.Println("Loading partition metadata for Host: ", address)
+
+			log.WithFields(log.Fields{
+				"host": hostAddress,
+			}).Info("Loading partition metadata for host")
 
 			for _, hostDomain := range host.GetAssignedDomains(ctx) {
 
 				domain, err := hostDomain.GetDomain(ctx, p.coordinator)
-				fmt.Printf("Found assigned %v : %v \n", host.GetAddress().Print(), domain.GetName())
+				log.WithFields(log.Fields{
+					"host":   hostAddress,
+					"domain": domain.GetName(),
+				}).Info("Found domain assigned to host")
 
 				if err != nil {
 					return err
@@ -467,10 +503,13 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 			if pool == nil {
 
-				fmt.Println("Establishing " + strconv.Itoa(int(opts.NumConnectionsPerHost)) + " connections to " + host.GetAddress().Print() +
-					"with connection try lock timeout = " + strconv.Itoa(int(opts.TryLockTimeoutMs)) + "ms, " +
-					"connection establisment timeout = " + strconv.Itoa(int(opts.EstablishConnectionTimeoutMs)) + "ms, " +
-					"query timeout = " + strconv.Itoa(int(opts.QueryTimeoutMs)) + "ms")
+				log.WithFields(log.Fields{
+					"NumConnectionsPerHost":        opts.NumConnectionsPerHost,
+					"TryLockTimeoutMs":             opts.TryLockTimeoutMs,
+					"EstablishConnectionTimeoutMs": opts.EstablishConnectionTimeoutMs,
+					"QueryTimeoutMs":               opts.QueryTimeoutMs,
+					"host":                         hostAddress,
+				}).Info("Establishing connections to host")
 
 				var wg sync.WaitGroup
 				wg.Add(int(opts.NumConnectionsPerHost))
@@ -493,14 +532,13 @@ func (p *HankSmartClient) buildNewConnectionCache(
 						if err == nil {
 							connections <- connection
 						} else {
-							fmt.Println("Error connecting to host:")
-							fmt.Println(err)
+							log.WithError(err).Error("error connecting to host")
 						}
 
 					}()
 				}
 
-				fmt.Println("Waiting for connections to complete")
+				log.Info("Waiting for connections to complete")
 				wg.Wait()
 
 				close(connections)

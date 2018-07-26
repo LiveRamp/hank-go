@@ -2,7 +2,6 @@ package fixtures
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -11,6 +10,8 @@ import (
 	"github.com/curator-go/curator"
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func WaitUntilOrFail(t *testing.T, expectTrue func() bool) error {
@@ -32,7 +33,7 @@ func WaitUntilOrFail(t *testing.T, expectTrue func() bool) error {
 	assert.True(t, err == nil)
 
 	if err == nil {
-		fmt.Println("Assertion success!")
+		log.Info("Assertion success!")
 	}
 
 	return err
@@ -51,7 +52,7 @@ func (lw logWriter) Write(b []byte) (int, error) {
 func SetupZookeeper(t *testing.T) (*zk.TestCluster, curator.CuratorFramework) {
 	cluster, err := zk.StartTestCluster(1, nil, logWriter{t: t, p: "[ZKERR] "})
 	if err != nil {
-		fmt.Println(err)
+		log.WithError(err).Error("Error setting up zookeeper")
 		t.FailNow()
 		return nil, nil
 	}
@@ -65,7 +66,7 @@ func SetupZookeeper(t *testing.T) (*zk.TestCluster, curator.CuratorFramework) {
 }
 
 func TeardownZookeeper(cluster *zk.TestCluster, client curator.CuratorFramework) {
-	fmt.Println("Tearing down zookeeper")
+	log.Info("Tearing down zookeeper")
 	client.ZookeeperClient().Close()
 	cluster.StopAllServers()
 }
