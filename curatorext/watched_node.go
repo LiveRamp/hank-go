@@ -56,7 +56,7 @@ func (p *ObjLoader) ChildEvent(client curator.CuratorFramework, event cache.Tree
 		obj, err := p.watchedNode.deserializer(p.watchedNode.ctx, data.Data(), p.watchedNode.constructor)
 		if err != nil {
 			//	log here because it's called by zk events and doesn't ever percolate up to the user
-			log.WithField("node_Added", event.Data.Path()).WithError(err).Error("error loading watched node child")
+			log.WithField("node_added", event.Data.Path()).WithError(err).Error("error loading watched node child")
 			return err
 		}
 
