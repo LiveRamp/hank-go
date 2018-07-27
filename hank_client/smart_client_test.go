@@ -133,7 +133,7 @@ func TestIt(t *testing.T) {
 	setStateBlocking(t, host1, ctx, iface.HOST_UPDATING)
 	fixtures.WaitUntilOrFail(t, func() bool {
 		_, err := smartClient.Get(domain0.GetName(), []byte("key1"))
-		return reflect.DeepEqual(	"no connection available to domain "+domain0.GetName(), err.Error())
+		return reflect.DeepEqual("no connection available to domain "+domain0.GetName(), err.Error())
 	})
 
 	//	when offline, try anyway if it's the only replica

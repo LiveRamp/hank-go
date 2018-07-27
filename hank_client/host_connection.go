@@ -9,8 +9,8 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/syncext"
 	"github.com/LiveRamp/hank-go-client/thriftext"
-	log "github.com/sirupsen/logrus"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type HostConnection struct {
