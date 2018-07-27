@@ -14,7 +14,7 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 const ASSIGNMENTS_PATH string = "a"
@@ -46,8 +46,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 
 	node, err := curatorext.NewThriftWatchedNode(client, curator.PERSISTENT, rootPath, ctx, iface.NewHostMetadata, metadata)
 	if err != nil {
-		log.WithField("path", rootPath).WithError(err).Error("Error creating host node")
-		return nil, err
+		return nil, errors.Wrapf(err, "error creating host node, path: ", rootPath)
 	}
 
 	adapter := &thriftext.Adapter{Notifier: listener}
@@ -64,8 +63,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 		iface.NewHostAssignmentMetadata,
 		assignmentMetadata)
 	if err != nil {
-		log.WithField("path", assignmentsRoot).WithError(err).Error("Error creating assignments node")
-		return nil, err
+		return nil, errors.Wrapf(err, "error creating assignments node, path: ", assignmentsRoot)
 	}
 
 	statePath := path.Join(rootPath, STATE_PATH)
@@ -76,8 +74,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 	state.AddListener(adapter)
 
 	if err != nil {
-		log.WithField("path", statePath).WithError(err).Error("Error creating state node")
-		return nil, err
+		return nil, errors.Wrapf(err, "error creating state node.  path: %v", statePath)
 	}
 
 	return &ZkHost{rootPath, node, partitionAssignments, state, listener}, nil

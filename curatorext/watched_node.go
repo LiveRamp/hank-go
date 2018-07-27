@@ -55,7 +55,8 @@ func (p *ObjLoader) ChildEvent(client curator.CuratorFramework, event cache.Tree
 
 		obj, err := p.watchedNode.deserializer(p.watchedNode.ctx, data.Data(), p.watchedNode.constructor)
 		if err != nil {
-			log.WithField("child", event.Data.Path()).WithError(err).Error("Error loading watched node child")
+			//	log here because it's called by zk events and doesn't ever percolate up to the user
+			log.WithField("node_added", event.Data.Path()).WithError(err).Error("error loading watched node child")
 			return err
 		}
 
@@ -69,7 +70,10 @@ func (p *ObjLoader) ChildEvent(client curator.CuratorFramework, event cache.Tree
 
 	if p.watchedNode.stat != nil && p.watchedNode.stat.Version != prevVersion {
 		for _, listener := range p.watchedNode.listeners {
-			listener.OnDataChange(p.watchedNode.value)
+			err := listener.OnDataChange(p.watchedNode.value)
+			if err != nil {
+				log.WithField("removed_path", event.Data.Path()).WithError(err).Error("error OnDataChange")
+			}
 		}
 	}
 

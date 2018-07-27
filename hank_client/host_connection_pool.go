@@ -2,7 +2,6 @@ package hank_client
 
 import (
 	"encoding/hex"
-	"errors"
 	"math/rand"
 	"sort"
 	"sync"
@@ -11,6 +10,8 @@ import (
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 
 	"github.com/LiveRamp/hank-go-client/iface"
+
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -83,7 +84,7 @@ func NewHostConnectionPool(connectionsByHost map[string][]*HostConnection, hostS
 	}
 
 	shuffledHosts := []string{}
-	for host, _ := range connectionsByHost {
+	for host := range connectionsByHost {
 		shuffledHosts = append(shuffledHosts, host)
 	}
 
@@ -262,41 +263,11 @@ func newTrue() *bool {
 	return &b
 }
 
-func NoConnectionAvailableResponse() *hank.HankResponse {
-
-	resp := &hank.HankResponse{}
-	exception := hank.HankException{}
-	exception.NoConnectionAvailable = newTrue()
-	resp.Xception = &exception
-
-	return resp
-}
-
-func FailedRetriesResponse(retries int32) *hank.HankResponse {
-
-	resp := &hank.HankResponse{}
-	exception := &hank.HankException{}
-	exception.FailedRetries = &retries
-	resp.Xception = exception
-
-	return resp
-}
-
-func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isLockHeld bool, domain iface.Domain, key []byte, numTries int32, maxNumTries int32) *hank.HankResponse {
+func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isLockHeld bool, domain iface.Domain, key []byte, numTries int32, maxNumTries int32) (*hank.HankResponse, error) {
 	domainId := domain.GetId()
 
 	if connection == nil {
-
-		log.WithFields(log.Fields{
-			"num_tries":     numTries,
-			"max_num_tries": maxNumTries,
-			"domain":        domain.GetName(),
-			"key":           hex.EncodeToString(key),
-			"local_pools":   p.preferredPools,
-			"other_pools":   p.otherPools,
-		}).Error("No connection is available.  Giving up.")
-
-		return NoConnectionAvailableResponse()
+		return nil, errors.Errorf("no connection available to domain %v", domain.GetName())
 	} else {
 
 		// Perform query
@@ -304,38 +275,28 @@ func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isL
 		resp, err := connection.connection.Get(domainId, key, isLockHeld)
 
 		if resp != nil {
-			return resp
+			return resp, nil
 		} else {
 
+			//	if we don't warn, we have no record of the error on retries
+			log.WithFields(log.Fields{
+				"host":          connection.connection.host.GetAddress(),
+				"num_tries":     numTries,
+				"max_num_tries": maxNumTries,
+				"domain":        domain.GetName(),
+				"key":           hex.EncodeToString(key),
+			}).WithError(err).Warn("Failed to perform query, retrying")
+
 			if numTries < maxNumTries {
-
-				log.WithFields(log.Fields{
-					"host":          connection.connection.host.GetAddress(),
-					"num_tries":     numTries,
-					"max_num_tries": maxNumTries,
-					"domain":        domain.GetName(),
-					"key":           hex.EncodeToString(key),
-				}).WithError(err).Error("Failed to perform query, retrying")
-
-				return nil
-
+				return nil, nil
 			} else {
-
-				log.WithFields(log.Fields{
-					"host":          connection.connection.host.GetAddress(),
-					"num_tries":     numTries,
-					"max_num_tries": maxNumTries,
-					"domain":        domain.GetName(),
-					"key":           hex.EncodeToString(key),
-				}).WithError(err).Error("Failed to perform query, giving up")
-
-				return FailedRetriesResponse(numTries)
+				return nil, errors.Errorf("failed to perform query. host: %v num_tries: %v domain: %v key: %v", connection.connection.host.GetAddress(), numTries, domain.GetName(), hex.EncodeToString(key))
 			}
 		}
 	}
 }
 
-func (p *HostConnectionPool) Get(domain iface.Domain, key []byte, maxNumTries int32, keyHash int32) *hank.HankResponse {
+func (p *HostConnectionPool) Get(domain iface.Domain, key []byte, maxNumTries int32, keyHash int32) (*hank.HankResponse, error) {
 
 	var indexedConnection *IndexedHostConnection
 	var locked bool
@@ -356,10 +317,14 @@ func (p *HostConnectionPool) Get(domain iface.Domain, key []byte, maxNumTries in
 
 		numPreferredTries++
 
-		response := p.attemptQuery(indexedConnection, locked, domain, key, numPreferredTries, maxNumTries)
+		response, err := p.attemptQuery(indexedConnection, locked, domain, key, numPreferredTries, maxNumTries)
+
+		if err != nil {
+			return nil, err
+		}
 
 		if response != nil {
-			return response
+			return response, nil
 		}
 
 	}
@@ -369,16 +334,20 @@ func (p *HostConnectionPool) Get(domain iface.Domain, key []byte, maxNumTries in
 		indexedConnection, locked = p.getConnectionFromPools(p.otherPools, keyHash, indexedConnection)
 		numOtherTries++
 
-		resp := p.attemptQuery(indexedConnection, locked, domain, key, numPreferredTries+numOtherTries, maxNumTries)
+		resp, err := p.attemptQuery(indexedConnection, locked, domain, key, numPreferredTries+numOtherTries, maxNumTries)
+
+		if err != nil {
+			return nil, err
+		}
 
 		if resp != nil {
-			return resp
+			return resp, nil
 		}
 
 	}
 
 	//	Go, you are a stupid compiler, this is unreachable.
-	return nil
+	return nil, nil
 }
 
 func (p *HostConnectionPool) GetConnections() []*HostConnection {

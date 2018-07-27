@@ -125,14 +125,15 @@ func TestIt(t *testing.T) {
 		assert.Equal(t, value, string(val.Value))
 	}
 
-	fakeDomain, _ := smartClient.Get("fake", []byte("na"))
-	assert.True(t, reflect.DeepEqual(noSuchDomain(), fakeDomain))
+	_, err := smartClient.Get("fake", []byte("na"))
+
+	assert.Equal(t, "domain fake not found", err.Error())
 
 	//	no replicas live if updating
 	setStateBlocking(t, host1, ctx, iface.HOST_UPDATING)
 	fixtures.WaitUntilOrFail(t, func() bool {
-		updating, _ := smartClient.Get(domain0.GetName(), []byte("key1"))
-		return reflect.DeepEqual(NoConnectionAvailableResponse(), updating)
+		_, err := smartClient.Get(domain0.GetName(), []byte("key1"))
+		return reflect.DeepEqual("no connection available to domain "+domain0.GetName(), err.Error())
 	})
 
 	//	when offline, try anyway if it's the only replica
