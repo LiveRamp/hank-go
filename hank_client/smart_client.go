@@ -1,7 +1,6 @@
 package hank_client
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -17,6 +16,8 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/syncext"
 	"github.com/LiveRamp/hank-go-client/thriftext"
+
+	"github.com/pkg/errors"
 )
 
 const NUM_STAT_SAMPLES = 3
@@ -293,29 +294,12 @@ func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error 
 	return nil
 }
 
-func noSuchDomain() *hank.HankResponse {
-	resp := hank.NewHankResponse()
-	exception := hank.NewHankException()
-	exception.NoSuchDomain = newTrue()
-	resp.Xception = exception
-	return resp
-}
-
-func noReplica() *hank.HankResponse {
-	resp := hank.NewHankResponse()
-	exception := hank.NewHankException()
-	exception.NoReplica = newTrue()
-	resp.Xception = exception
-	return resp
-}
-
 func (p *HankSmartClient) Get(domainName string, key []byte) (*hank.HankResponse, error) {
 
 	domain := p.coordinator.GetDomain(domainName)
 
 	if domain == nil {
-		log.WithField("domain", domainName).Error("Domain not found")
-		return noSuchDomain(), nil
+		return nil, errors.Errorf("domain %v not found", domainName)
 	}
 
 	return p.get(domain, key)
@@ -364,41 +348,28 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 		p.connectionLock.Unlock()
 
 		if parts == nil {
-
-			log.WithFields(log.Fields{
-				"domain":    domain.GetName(),
-				"domain_id": domainID,
-			}).Error("could not find domain in partition map")
-
-			return noReplica(), nil
+			return nil, errors.Errorf("could not find domain %v in partition map", domain.GetName())
 		}
 
 		pool := parts[iface.PartitionID(partition)]
 
 		if pool == nil {
-
-			log.WithFields(log.Fields{
-				"domain":    domain.GetName(),
-				"partition": partition,
-			}).Error("could not find list of hosts for domain partition")
-
-			return noReplica(), nil
+			return nil, errors.Errorf("could not find list of hosts for domain %v partition %v", domain.GetName(), partition)
 		}
 
-		response := pool.Get(domain, key, p.options.QueryMaxNumTries, keyHash)
+		response, err := pool.Get(domain, key, p.options.QueryMaxNumTries, keyHash)
+
+		if err != nil {
+			return nil, err
+		}
 
 		if p.cache != nil && response != nil && (response.IsSetNotFound() || response.IsSetValue()) {
 			p.cache.Set(entry, response, p.options.ResponseCacheExpiryTime)
 		}
 
 		if response.IsSetXception() {
-
-			log.WithFields(log.Fields{
-				"domain": domain.GetName(),
-				"partition": partition,
-				"key": key,
-			}).Error("Failed to perform Get")
-
+			return nil, errors.Errorf("received exception from server: %v for domain: %v partition: %v key: %v ",
+				response.Xception, domain.GetName(), partition, key)
 		}
 
 		return response, nil
@@ -431,7 +402,7 @@ func (p *HankSmartClient) buildNewConnectionCache(
 	//  this is horrible looking, and I'd love to make a MultiMap, but I can't because Go is the short-bus of languages
 	domainToPartToAddresses := make(map[iface.DomainID]map[iface.PartitionID][]*iface.PartitionServerAddress)
 
-	preferredHosts := []string{}
+	var preferredHosts []string
 	var err error
 
 	for _, ring := range p.ringGroup.GetRings() {
@@ -532,7 +503,7 @@ func (p *HankSmartClient) buildNewConnectionCache(
 						if err == nil {
 							connections <- connection
 						} else {
-							log.WithError(err).Error("error connecting to host")
+							log.WithError(err).Warn("error connecting to host")
 						}
 
 					}()

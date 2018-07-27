@@ -367,8 +367,8 @@ func TestOneHanging(t *testing.T) {
 	previousIface1NumGets := 0
 
 	for i := 0; i < 10; i++ {
-		val := pool.Get(domain, Key1(), 1, NO_HASH)
-		if val.IsSetValue() {
+		val, _ := pool.Get(domain, Key1(), 1, NO_HASH)
+		if val != nil && val.IsSetValue() {
 			numHits++
 		}
 
@@ -394,7 +394,7 @@ func TestOneHanging(t *testing.T) {
 	numHits = 0
 
 	for i := 0; i < 10; i++ {
-		val := pool.Get(domain, Key1(), 2, NO_HASH)
+		val, _ := pool.Get(domain, Key1(), 2, NO_HASH)
 		if val.IsSetValue() {
 			numHits++
 		}
@@ -449,10 +449,10 @@ func TestConsistentHashing(t *testing.T) {
 
 		for j := 0; j < 10; j++ {
 
-			respA := poolA.Get(domain, []byte(Val1Str), 1, keyHash)
-			respB := poolB.Get(domain, []byte(Val1Str), 1, keyHash)
+			respA, _ := poolA.Get(domain, []byte(Val1Str), 1, keyHash)
+			respB, _ := poolB.Get(domain, []byte(Val1Str), 1, keyHash)
 
-			if respA.IsSetValue() && respB.IsSetValue() {
+			if respA != nil && respB != nil && respA.IsSetValue() && respB.IsSetValue() {
 				numHits += 2
 			}
 
@@ -480,8 +480,8 @@ func TestConsistentHashing(t *testing.T) {
 func queryKey(pool *HostConnectionPool, domain iface.Domain, t *testing.T, times int, numTries int32, expected string) int {
 	numHits := 0
 	for i := 0; i < times; i++ {
-		val := pool.Get(domain, Key1(), numTries, NO_HASH)
-		if val.IsSetValue() {
+		val, _ := pool.Get(domain, Key1(), numTries, NO_HASH)
+		if val != nil && val.IsSetValue() {
 			numHits++
 		}
 	}

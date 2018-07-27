@@ -11,6 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 type Loader func(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error)
@@ -47,6 +49,7 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 			err := conditionalInsert(p.ctx, client, p.loader, p.listener, p.lock, p.internalData, fullChildPath)
 			p.listener.OnChange()
 			if err != nil {
+				//	log here because it's called by zk events and doesn't ever percolate up to the user
 				log.WithError(err).WithField("root", p.root).Error("Error inserting child")
 				return err
 			}
@@ -121,11 +124,7 @@ func NewZkWatchedMap(
 		child := path.Join(root, element)
 		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, child)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"root":  root,
-				"child": child,
-			}).Error("Error loading initial child")
-			return nil, err
+			return nil, errors.Wrapf(err, "Error loading intitial child %v into root %v", root, child)
 		}
 	}
 

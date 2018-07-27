@@ -1,8 +1,6 @@
 package hank_client
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
@@ -12,6 +10,7 @@ import (
 	"github.com/LiveRamp/hank-go-client/syncext"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 type HostConnection struct {
@@ -118,7 +117,7 @@ func (p *HostConnection) Get(id iface.DomainID, key []byte, isLockHeld bool) (*h
 	if !isLockHeld {
 		acquired := p.TryLockWithTimeout()
 		if !acquired {
-			return nil, errors.New("Exceeded timeout while trying to lock the host connection.")
+			return nil, errors.Errorf("Exceeded timeout while trying to lock the host connection.")
 		}
 	}
 
@@ -143,10 +142,9 @@ func (p *HostConnection) Get(id iface.DomainID, key []byte, isLockHeld bool) (*h
 		p.Unlock()
 		return nil, err
 	} else if resp.IsSetXception() {
-		log.WithField("exception", resp.Xception).Error("Exception from server")
 		p.Disconnect()
 		p.Unlock()
-		return nil, errors.New("exception from server")
+		return nil, errors.Errorf("exception from server: %v", resp.Xception)
 	}
 
 	p.Unlock()
@@ -213,19 +211,11 @@ func (p *HostConnection) OnDataChange(newVal interface{}) (err error) {
 				log.WithFields(log.Fields{
 					"host":    hostName,
 					"attempt": tries,
-				}).WithError(err).Error("error connecting to host")
+				}).WithError(err).Warn("error connecting to host")
 			}
 		}
 
-		msg := fmt.Sprintf("Failed to connect to host %v after %v retries.  Failing.", hostName, p.establishConnectionRetries)
-		err := errors.New(msg)
-
-		log.WithFields(log.Fields{
-			"host":    hostName,
-			"retries": p.establishConnectionRetries,
-		}).WithError(err).Error(msg)
-
-		return err
+		return errors.Errorf("Failed to connect to host %v after %v retries.  Failing.", hostName, p.establishConnectionRetries)
 
 	}
 
