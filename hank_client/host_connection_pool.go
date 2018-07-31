@@ -285,7 +285,7 @@ func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isL
 				"max_num_tries": maxNumTries,
 				"domain":        domain.GetName(),
 				"key":           hex.EncodeToString(key),
-			}).WithError(err).Warn("Failed to perform query, retrying")
+			}).WithError(err).Debug("Failed to perform query, retrying")
 
 			if numTries < maxNumTries {
 				return nil, nil
