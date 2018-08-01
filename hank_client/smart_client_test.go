@@ -286,7 +286,7 @@ func TestSelectiveCacheRebuilds(t *testing.T) {
 	partition := assigned[0].GetPartitions()[0]
 
 	options := NewHankSmartClientOptions().
-		SetNumConnectionsPerHost(2).
+		SetNumConnectionsPerHost(1).
 		SetQueryTimeoutMs(100).
 		SetMinConnectionsPerPartition(1)
 
@@ -300,11 +300,18 @@ func TestSelectiveCacheRebuilds(t *testing.T) {
 
 	smartClient, _ := New(coord, "rg1", options)
 
+	assert.Equal(t, 0, smartClient.numCacheRebuildTriggers)
+	assert.Equal(t, 0, smartClient.numClosedConnections)
+	assert.Equal(t, 1, smartClient.numCreatedConnections)
+
 	// do something important.
 	rg1.AddRing(ctx, iface.RingID(1))
 	fixtures.WaitUntilOrFail(t, func() bool{
 		return smartClient.numCacheRebuildTriggers == 1
 	})
+
+	assert.Equal(t, 0, smartClient.numClosedConnections)
+	assert.Equal(t, 1, smartClient.numCreatedConnections)
 
 	assert.Equal(t, 0, smartClient.numSkippedRebuildTriggers)
 

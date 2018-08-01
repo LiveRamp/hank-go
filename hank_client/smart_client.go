@@ -86,6 +86,8 @@ type HankSmartClient struct {
 	//	mostly for testing
 	numCacheRebuildTriggers		int
 	numSkippedRebuildTriggers 	int
+	numCreatedConnections		int
+	numClosedConnections		int
 
 	cache    *ccache.Cache
 	counters *RequestCounters
@@ -134,6 +136,8 @@ func New(
 		&sync.Mutex{},
 		&stopping,
 		id,
+		0,
+		0,
 		0,
 		0,
 		cache,
@@ -319,8 +323,10 @@ func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error 
 
 	for address, pool := range oldServerToConnections {
 		if _, ok := p.serverToConnections[address]; !ok {
+			log.WithField("address", address).Info("closing connections to server %v ", address)
 			for _, conn := range pool.GetConnections() {
 				conn.Disconnect()
+				p.numClosedConnections++
 			}
 		}
 	}
@@ -552,6 +558,8 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 				log.Info("Waiting for connections to complete")
 				wg.Wait()
+
+				p.numCreatedConnections += int(opts.NumConnectionsPerHost)
 
 				close(connections)
 

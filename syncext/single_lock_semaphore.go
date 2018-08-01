@@ -4,9 +4,10 @@ type SingleLockSemaphore struct {
 	c chan struct{}
 }
 
+//	this does NOT start unlocked
 func NewSingleLockSemaphore() *SingleLockSemaphore {
 	mutex := &SingleLockSemaphore{make(chan struct{}, 1)}
-	mutex.Release()
+	mutex.Read()
 	return mutex
 }
 
