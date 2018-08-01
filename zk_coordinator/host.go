@@ -65,6 +65,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating assignments node, path: ", assignmentsRoot)
 	}
+	partitionAssignments.AddListener(adapter)
 
 	statePath := path.Join(rootPath, STATE_PATH)
 	state, err := curatorext.NewStringWatchedNode(client,
@@ -98,10 +99,10 @@ func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, liste
 
 	state, err := curatorext.LoadStringWatchedNode(client,
 		path.Join(rootPath, STATE_PATH), false)
-
 	if err != nil {
 		return nil, err
 	}
+
 	state.AddListener(adapter)
 
 	return &ZkHost{rootPath, node, assignments, state, listener}, nil

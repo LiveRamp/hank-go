@@ -38,12 +38,13 @@ func createZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework
 
 	curatorext.CreateWithParents(client, curator.PERSISTENT, rgRootPath, nil)
 
-	listener := thriftext.NewMultiNotifier()
-
-	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), listener, loadClientMetadata)
+	//	we are intentionally not notifying any listeners about new clients.  it's just noise.
+	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), &thriftext.NoOp{}, loadClientMetadata)
 	if err != nil {
 		return nil, err
 	}
+
+	listener := thriftext.NewMultiNotifier()
 
 	rings, err := curatorext.NewZkWatchedMap(client, rgRootPath, listener, loadZkRing)
 	if err != nil {
