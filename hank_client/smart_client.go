@@ -18,13 +18,18 @@ import (
 	"github.com/LiveRamp/hank-go-client/thriftext"
 
 	"github.com/pkg/errors"
-	"strings"
+	"regexp"
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 )
 
-const NUM_STAT_SAMPLES = 3
-const SAMPLE_SLEEP_TIME = time.Second
-const STAT_INTERVAL = time.Second * 30
+const NumStatSamples = 3
+const SampleSleepTime = time.Second
+const StatInterval = time.Second * 30
+
+//	we don't want to rebuild each time an updating host updates a version of a partition.  we'll catch it when
+//	it switches back to active.
+var AssignmentsRegex = regexp.MustCompile(fmt.Sprintf("hosts/[-0-9]+/%v", zk_coordinator.ASSIGNMENTS_PATH))
+var SkipRebuildPaths = []*regexp.Regexp{AssignmentsRegex}
 
 type RequestCounters struct {
 	requests  int64
@@ -154,20 +159,17 @@ func New(
 
 func (p *HankSmartClient) OnChange(path string) {
 
-	//	TODO proper regex to match /hank/ring_groups/rg1/ring-0/hosts/-6753311853605341522/a
-	//	but I'm on a plane and can't look up how to do regexes in go.  maybe should have a list of regexes
-	//	to skip?
-
-	//	we don't want to rebuild each time an updating host updates a version of a partition.  we'll catch it when
-	//	it switches back to active.
-	if strings.Contains(path, "hosts") && strings.HasSuffix(path, zk_coordinator.ASSIGNMENTS_PATH) {
-		log.WithField("changed_path", path).Info("Skipping cache rebuild")
-		p.numSkippedRebuildTriggers++
-	}else{
-		log.WithField("changed_path", path).Info("Triggering cache rebuild")
-		p.numCacheRebuildTriggers++
-		p.cacheUpdateLock.Release()
+	for _, item := range SkipRebuildPaths {
+		if len(item.FindStringSubmatch(path)) > 0 {
+			log.WithField("changed_path", path).Info("Skipping cache rebuild")
+			p.numSkippedRebuildTriggers++
+			return
+		}
 	}
+
+	log.WithField("changed_path", path).Info("Triggering cache rebuild")
+	p.numCacheRebuildTriggers++
+	p.cacheUpdateLock.Release()
 
 }
 
@@ -204,19 +206,19 @@ func (p *HankSmartClient) runtimeStatsLoop() {
 			break
 		}
 
-		time.Sleep(STAT_INTERVAL)
+		time.Sleep(StatInterval)
 
 		serverTotalConns := make(map[string]int64)
 		serverLockedConns := make(map[string]int64)
 
-		for i := 0; i < NUM_STAT_SAMPLES; i++ {
+		for i := 0; i < NumStatSamples; i++ {
 			for server, conns := range p.serverToConnections {
 				conns, lockedConns := conns.GetConnectionLoad()
 				serverTotalConns[server] += conns
 				serverLockedConns[server] += lockedConns
 			}
 
-			time.Sleep(SAMPLE_SLEEP_TIME)
+			time.Sleep(SampleSleepTime)
 		}
 
 		for server, total := range serverTotalConns {

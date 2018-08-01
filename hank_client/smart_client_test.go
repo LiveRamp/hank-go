@@ -12,7 +12,6 @@ import (
 	"github.com/LiveRamp/hank-go-client/thrift_services"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
-	"fmt"
 )
 
 func TestSmartClient(t *testing.T) {
@@ -118,7 +117,11 @@ func TestIt(t *testing.T) {
 		SetNumConnectionsPerHost(2).
 		SetQueryTimeoutMs(100)
 
-	smartClient, _ := New(coord, "rg1", options)
+	smartClient, err := New(coord, "rg1", options)
+
+	if err != nil{
+		t.Fail()
+	}
 
 	//	check each record can be found
 	for key, value := range values {
@@ -126,7 +129,7 @@ func TestIt(t *testing.T) {
 		assert.Equal(t, value, string(val.Value))
 	}
 
-	_, err := smartClient.Get("fake", []byte("na"))
+	_, err = smartClient.Get("fake", []byte("na"))
 
 	assert.Equal(t, "domain fake not found", err.Error())
 
@@ -140,18 +143,26 @@ func TestIt(t *testing.T) {
 	//	when offline, try anyway if it's the only replica
 	setStateBlocking(t, host1, ctx, iface.HOST_OFFLINE)
 	fixtures.WaitUntilOrFail(t, func() bool {
-		updating, _ := smartClient.Get(domain0.GetName(), []byte("key1"))
+
+		updating, err := smartClient.Get(domain0.GetName(), []byte("key1"))
+
+		if err != nil{
+			return false
+		}
+
 		return reflect.DeepEqual("value1", string(updating.Value))
 	})
 
 	//	ok again when serving
 	setStateBlocking(t, host1, ctx, iface.HOST_SERVING)
 	fixtures.WaitUntilOrFail(t, func() bool {
-		updating, _ := smartClient.Get(domain0.GetName(), []byte("key1"))
+		updating, err := smartClient.Get(domain0.GetName(), []byte("key1"))
+		if err != nil{
+			return false
+		}
+
 		return reflect.DeepEqual("value1", string(updating.Value))
 	})
-
-	setStateBlocking(t, host0, ctx, iface.HOST_SERVING)
 
 	//	test when a new domain is added, the client picks it up
 	domain1, _ := coord.AddDomain(ctx, "second_domain", 2, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
@@ -163,13 +174,20 @@ func TestIt(t *testing.T) {
 	host0Domain2, _ := host0.AddDomain(ctx, domain1)
 	host0Domain2.AddPartition(ctx, iface.PartitionID(0))
 
+	setStateBlocking(t, host0, ctx, iface.HOST_SERVING)
+
 	fixtures.WaitUntilOrFail(t, func() bool {
 		return len(host1.GetAssignedDomains(ctx)) == 2 && len(host0.GetAssignedDomains(ctx)) == 2
 	})
 
 	//	verify that the client can query the domain now
 	fixtures.WaitUntilOrFail(t, func() bool {
-		updating, _ := smartClient.Get(domain1.GetName(), []byte("key1"))
+
+		updating, err := smartClient.Get(domain1.GetName(), []byte("key1"))
+		if err != nil{
+			return false
+		}
+
 		return reflect.DeepEqual("value1", string(updating.Value))
 	})
 
@@ -304,7 +322,6 @@ func TestSelectiveCacheRebuilds(t *testing.T) {
 
 	//	make sure it registers
 	fixtures.WaitUntilOrFail(t, func() bool {
-		fmt.Println(rg1.GetClients())
 		return len(rg1.GetClients()) == 2
 	})
 
