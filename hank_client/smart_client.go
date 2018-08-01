@@ -405,12 +405,19 @@ func (p *HankSmartClient) buildNewConnectionCache(
 	var preferredHosts []string
 	var err error
 
-	for _, ring := range p.ringGroup.GetRings() {
+	rings := p.ringGroup.GetRings()
+
+	log.WithField("num_rings", len(rings)).Info("Building new connection caches")
+
+	for _, ring := range rings {
+		hosts := ring.GetHosts(ctx)
+
 		log.WithFields(log.Fields{
-			"ring": ring,
+			"ring": ring.GetNum(),
+			"num_hosts": len(hosts),
 		}).Info("Building connection cache for ring")
 
-		for _, host := range ring.GetHosts(ctx) {
+		for _, host := range hosts {
 			hostAddress := host.GetAddress().Print()
 
 			log.WithFields(log.Fields{

@@ -60,6 +60,10 @@ func createZkRing(ctx *thriftext.ThreadCtx, root string, num iface.RingID, liste
 
 //  public methods
 
+func (p *ZkRing) GetNum() iface.RingID {
+	return p.num
+}
+
 func (p *ZkRing) AddHost(ctx *thriftext.ThreadCtx, hostName string, port int, hostFlags []string) (iface.Host, error) {
 
 	host, err := CreateZkHost(ctx, p.client, p.listener, p.hosts.Root, hostName, port, hostFlags)

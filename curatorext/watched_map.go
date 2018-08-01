@@ -50,7 +50,7 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 			p.listener.OnChange()
 			if err != nil {
 				//	log here because it's called by zk events and doesn't ever percolate up to the user
-				log.WithError(err).WithField("root", p.root).Error("Error inserting child")
+				log.WithError(err).WithField("child", fullChildPath).WithField("root", p.root).Warn("Error inserting child")
 				return err
 			}
 		}

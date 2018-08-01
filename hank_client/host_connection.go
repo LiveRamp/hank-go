@@ -154,14 +154,14 @@ func (p *HostConnection) Get(id iface.DomainID, key []byte, isLockHeld bool) (*h
 
 func (p *HostConnection) connect() error {
 
-	p.socket, _ = thrift.NewTSocketTimeout(p.host.GetAddress().Print(), time.Duration(p.establishConnectionTimeoutMs*1e6))
+	host := p.host.GetAddress().Print()
+	p.socket, _ = thrift.NewTSocketTimeout(host, time.Duration(p.establishConnectionTimeoutMs*1e6))
 	framed := thrift.NewTFramedTransportMaxLength(p.socket, 16384000)
 
 	err := framed.Open()
 	if err != nil {
-		log.WithError(err).Error("error connecting to host")
 		p.Disconnect()
-		return err
+		return errors.Wrapf(err, "error connecting to host %v", host)
 	}
 
 	p.client = hank.NewPartitionServerClientFactory(

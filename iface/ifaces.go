@@ -50,6 +50,8 @@ type Ring interface {
 	AddHost(ctx *thriftext.ThreadCtx, hostName string, port int, hostFlags []string) (Host, error)
 
 	GetHosts(ctx *thriftext.ThreadCtx) []Host
+
+	GetNum() RingID
 }
 
 type RingGroup interface {
