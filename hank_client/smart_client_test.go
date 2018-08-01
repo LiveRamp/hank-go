@@ -12,6 +12,7 @@ import (
 	"github.com/LiveRamp/hank-go-client/thrift_services"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	"fmt"
 )
 
 func TestSmartClient(t *testing.T) {
@@ -240,6 +241,85 @@ func TestIt(t *testing.T) {
 	close3()
 
 	fixtures.TeardownZookeeper(cluster, client)
+}
+
+
+func TestSelectiveCacheRebuilds(t *testing.T) {
+
+	cluster, client := fixtures.SetupZookeeper(t)
+
+	ctx := thriftext.NewThreadCtx()
+
+	coord, _ := zk_coordinator.NewZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+
+	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
+
+	rg1, _ := coord.AddRingGroup(ctx, "rg1")
+	ring1, _ := rg1.AddRing(ctx, iface.RingID(0))
+
+	host0, _ := ring1.AddHost(ctx, "localhost", 12345, []string{})
+	host0Domain, _ := host0.AddDomain(ctx, domain0)
+	host0Domain.AddPartition(ctx, iface.PartitionID(0))
+	assigned := host0.GetAssignedDomains(ctx)
+	partition := assigned[0].GetPartitions()[0]
+
+	options := NewHankSmartClientOptions().
+		SetNumConnectionsPerHost(2).
+		SetQueryTimeoutMs(100).
+		SetMinConnectionsPerPartition(1)
+
+	server1Values := make(map[string]string)
+	server1Values["key1"] = "value1"
+
+	handler := thrift_services.NewPartitionServerHandler(server1Values)
+	close1 := createServer(t, ctx, host0, handler)
+
+	fixtures.WaitUntilOrFail(t, queryMatches("key1", "value1", "rg1", domain0.GetName(), coord, options))
+
+	smartClient, _ := New(coord, "rg1", options)
+
+	// do something important.
+	rg1.AddRing(ctx, iface.RingID(1))
+	fixtures.WaitUntilOrFail(t, func() bool{
+		return smartClient.numCacheRebuildTriggers == 1
+	})
+
+	assert.Equal(t, 0, smartClient.numSkippedRebuildTriggers)
+
+	//	update the partition version (eg, what a server does when updating)
+	partition.SetCurrentDomainVersion(ctx, iface.VersionID(1))
+	time.Sleep(time.Second * 2)
+
+	//	assert we skipped the update
+	fixtures.WaitUntilOrFail(t, func() bool {
+		return smartClient.numSkippedRebuildTriggers == 1
+	})
+	assert.Equal(t, 1, smartClient.numCacheRebuildTriggers)
+
+	smartClient2, _ := New(coord, "rg1", options)
+
+	//	make sure it registers
+	fixtures.WaitUntilOrFail(t, func() bool {
+		fmt.Println(rg1.GetClients())
+		return len(rg1.GetClients()) == 2
+	})
+
+	//	assert this message wasn't passed at all
+	fixtures.WaitUntilOrFail(t, func() bool {
+		return smartClient.numSkippedRebuildTriggers == 1
+	})
+	assert.Equal(t, 1, smartClient.numCacheRebuildTriggers)
+
+	smartClient.Stop()
+	smartClient2.Stop()
+
+	close1()
+	fixtures.TeardownZookeeper(cluster, client)
+
 }
 
 func TestDeadHost(t *testing.T) {

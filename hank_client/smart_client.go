@@ -18,6 +18,8 @@ import (
 	"github.com/LiveRamp/hank-go-client/thriftext"
 
 	"github.com/pkg/errors"
+	"strings"
+	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 )
 
 const NUM_STAT_SAMPLES = 3
@@ -74,6 +76,12 @@ type HankSmartClient struct {
 	connectionLock            *sync.Mutex
 	stopping                  *bool
 
+	clientId				  string
+
+	//	mostly for testing
+	numCacheRebuildTriggers		int
+	numSkippedRebuildTriggers 	int
+
 	cache    *ccache.Cache
 	counters *RequestCounters
 
@@ -95,7 +103,7 @@ func New(
 	}
 
 	ctx := thriftext.NewThreadCtx()
-	registerErr := ringGroup.RegisterClient(ctx, metadata)
+	id, registerErr := ringGroup.RegisterClient(ctx, metadata)
 
 	if registerErr != nil {
 		log.WithError(registerErr).Error("error registering client")
@@ -120,6 +128,9 @@ func New(
 		make(map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool),
 		&sync.Mutex{},
 		&stopping,
+		id,
+		0,
+		0,
 		cache,
 		NewRequestCounters(),
 		connectionCacheLock,
@@ -141,8 +152,23 @@ func New(
 	return client, nil
 }
 
-func (p *HankSmartClient) OnChange() {
-	p.cacheUpdateLock.Release()
+func (p *HankSmartClient) OnChange(path string) {
+
+	//	TODO proper regex to match /hank/ring_groups/rg1/ring-0/hosts/-6753311853605341522/a
+	//	but I'm on a plane and can't look up how to do regexes in go.  maybe should have a list of regexes
+	//	to skip?
+
+	//	we don't want to rebuild each time an updating host updates a version of a partition.  we'll catch it when
+	//	it switches back to active.
+	if strings.Contains(path, "hosts") && strings.HasSuffix(path, zk_coordinator.ASSIGNMENTS_PATH) {
+		log.WithField("changed_path", path).Info("Skipping cache rebuild")
+		p.numSkippedRebuildTriggers++
+	}else{
+		log.WithField("changed_path", path).Info("Triggering cache rebuild")
+		p.numCacheRebuildTriggers++
+		p.cacheUpdateLock.Release()
+	}
+
 }
 
 func (p *HankSmartClient) updateLoop(listenerLock *syncext.SingleLockSemaphore) {
@@ -161,6 +187,10 @@ func (p *HankSmartClient) updateLoop(listenerLock *syncext.SingleLockSemaphore) 
 		p.updateConnectionCache(ctx)
 	}
 
+}
+
+func (p* HankSmartClient) getNumCacheRebuildTriggers() int{
+	return p.numCacheRebuildTriggers
 }
 
 func (p *HankSmartClient) runtimeStatsLoop() {
@@ -237,6 +267,8 @@ func (p *HankSmartClient) Stop() {
 			}
 		}
 	}
+
+	p.ringGroup.DeregisterClient(&thriftext.ThreadCtx{}, p.clientId)
 
 }
 

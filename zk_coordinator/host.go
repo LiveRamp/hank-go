@@ -77,7 +77,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 		return nil, errors.Wrapf(err, "error creating state node.  path: %v", statePath)
 	}
 
-	return &ZkHost{rootPath, node, partitionAssignments, state, listener}, nil
+	return &ZkHost{rootPath, node, partitionAssignments, state, listener, }, nil
 }
 
 func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, rootPath string) (interface{}, error) {
@@ -194,6 +194,10 @@ func (p *ZkHost) getPartitions(domainId iface.DomainID) []iface.HostDomainPartit
 
 //  public
 
+func (p *ZkHost) GetPath() string {
+	return p.path
+}
+
 func (p *ZkHost) GetID() string {
 	return path.Base(p.path)
 }
@@ -265,7 +269,7 @@ func (p *ZkHost) AddDomain(ctx *thriftext.ThreadCtx, domain iface.Domain) (iface
 		return nil, err
 	}
 
-	p.listener.OnChange()
+	p.listener.OnChange(domain.GetPath())
 
 	return newZkHostDomain(p, domainId), nil
 }

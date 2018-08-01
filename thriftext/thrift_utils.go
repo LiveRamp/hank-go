@@ -33,7 +33,7 @@ func NewThreadCtx() *ThreadCtx {
 
 type GetBytes func() ([]byte, error)
 
-type SetBytes func(value []byte) error
+type SetBytes func(value []byte) (path string, err error)
 
 func (p *ThreadCtx) ReadThrift(get GetBytes, emptyStruct thrift.TStruct) error {
 
@@ -59,11 +59,11 @@ func (p *ThreadCtx) ReadThriftBytes(data []byte, emptyStruct thrift.TStruct) err
 	return nil
 }
 
-func (p *ThreadCtx) SetThrift(set SetBytes, tStruct thrift.TStruct) error {
+func (p *ThreadCtx) SetThrift(set SetBytes, tStruct thrift.TStruct) (path string, err error) {
 
 	bytes, err := p.ToBytes(tStruct)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	return set(bytes)

@@ -70,7 +70,7 @@ func (p *ObjLoader) ChildEvent(client curator.CuratorFramework, event cache.Tree
 
 	if p.watchedNode.stat != nil && p.watchedNode.stat.Version != prevVersion {
 		for _, listener := range p.watchedNode.listeners {
-			err := listener.OnDataChange(p.watchedNode.value)
+			err := listener.OnDataChange(p.watchedNode.value, event.Data.Path())
 			if err != nil {
 				log.WithField("removed_path", event.Data.Path()).WithError(err).Error("error OnDataChange")
 			}

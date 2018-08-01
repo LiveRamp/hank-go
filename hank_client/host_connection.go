@@ -52,7 +52,7 @@ func NewHostConnection(
 
 	host.AddStateChangeListener(&connection)
 
-	err := connection.OnDataChange(string(host.GetState()))
+	err := connection.OnDataChange(string(host.GetState()), host.GetPath())
 
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (p *HostConnection) connect() error {
 	return nil
 }
 
-func (p *HostConnection) OnDataChange(newVal interface{}) (err error) {
+func (p *HostConnection) OnDataChange(newVal interface{}, path string) (err error) {
 
 	if newVal == nil {
 		newVal = string(iface.HOST_OFFLINE)

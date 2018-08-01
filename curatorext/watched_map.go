@@ -47,7 +47,7 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 
 		if IsSubdirectory(p.root, fullChildPath) {
 			err := conditionalInsert(p.ctx, client, p.loader, p.listener, p.lock, p.internalData, fullChildPath)
-			p.listener.OnChange()
+			p.listener.OnChange(fullChildPath)
 			if err != nil {
 				//	log here because it's called by zk events and doesn't ever percolate up to the user
 				log.WithError(err).WithField("child", fullChildPath).WithField("root", p.root).Warn("Error inserting child")
@@ -59,7 +59,7 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 		p.lock.Lock()
 		delete(p.internalData, path.Base(fullChildPath))
 		p.lock.Unlock()
-		p.listener.OnChange()
+		p.listener.OnChange(fullChildPath)
 	}
 
 	return nil
@@ -124,7 +124,7 @@ func NewZkWatchedMap(
 		child := path.Join(root, element)
 		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, child)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error loading intitial child %v into root %v", root, child)
+			return nil, errors.Wrapf(err, "Error loading initial child %v into root %v", root, child)
 		}
 	}
 

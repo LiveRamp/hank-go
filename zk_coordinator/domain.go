@@ -18,6 +18,8 @@ type ZkDomain struct {
 	metadata *curatorext.ZkWatchedNode
 
 	partitioner iface.Partitioner
+
+	path string
 }
 
 func createZkDomain(ctx *thriftext.ThreadCtx,
@@ -51,8 +53,12 @@ func createZkDomain(ctx *thriftext.ThreadCtx,
 		return nil, nodeErr
 	}
 
-	return &ZkDomain{name: name, metadata: node}, nil
+	return &ZkDomain{name: name, metadata: node, path: root}, nil
 
+}
+
+func (p *ZkDomain) GetPath() string{
+	return p.path
 }
 
 func (p *ZkDomain) GetPartitioner() iface.Partitioner {
