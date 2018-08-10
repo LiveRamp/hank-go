@@ -165,7 +165,6 @@ func (p *HankSmartClient) OnChange(path string) {
 
 	for _, item := range SkipRebuildPaths {
 		if len(item.FindStringSubmatch(path)) > 0 {
-			log.WithField("changed_path", path).Info("Skipping cache rebuild")
 			p.numSkippedRebuildTriggers++
 			return
 		}
