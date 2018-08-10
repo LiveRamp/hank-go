@@ -11,6 +11,7 @@ import (
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
 	log "github.com/sirupsen/logrus"
+	"path/filepath"
 )
 
 const CLIENT_ROOT string = "c"
@@ -37,12 +38,13 @@ func createZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework
 
 	curatorext.CreateWithParents(client, curator.PERSISTENT, rgRootPath, nil)
 
-	listener := thriftext.NewMultiNotifier()
-
-	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), listener, loadClientMetadata)
+	//	we are intentionally not notifying any listeners about new clients.  it's just noise.
+	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), &thriftext.NoOp{}, loadClientMetadata)
 	if err != nil {
 		return nil, err
 	}
+
+	listener := thriftext.NewMultiNotifier()
 
 	rings, err := curatorext.NewZkWatchedMap(client, rgRootPath, listener, loadZkRing)
 	if err != nil {
@@ -61,14 +63,15 @@ func loadZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, 
 		return nil, err
 	}
 
-	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), listener, loadClientMetadata)
+	multiListener := thriftext.NewMultiNotifier()
+	multiListener.AddClient(listener)
+
+	//	we are intentionally not notifying any listeners about new clients.  it's just noise.
+	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), &thriftext.NoOp{}, loadClientMetadata)
 	if err != nil {
 		log.WithError(err).Error("Error loading zk clients")
 		return nil, err
 	}
-
-	multiListener := thriftext.NewMultiNotifier()
-	multiListener.AddClient(listener)
 
 	rings, err := curatorext.NewZkWatchedMap(client, rgRootPath, multiListener, loadZkRing)
 	if err != nil {
@@ -89,8 +92,18 @@ func loadClientMetadata(ctx *thriftext.ThreadCtx, client curator.CuratorFramewor
 
 //  methods
 
-func (p *ZkRingGroup) RegisterClient(ctx *thriftext.ThreadCtx, metadata *hank.ClientMetadata) error {
-	return ctx.SetThrift(curatorext.CreateEphemeralSequential(path.Join(p.clients.Root, CLIENT_NODE), p.client), metadata)
+func (p *ZkRingGroup) RegisterClient(ctx *thriftext.ThreadCtx, metadata *hank.ClientMetadata) (id string, err error) {
+	path, err := ctx.SetThrift(curatorext.CreateEphemeralSequential(path.Join(p.clients.Root, CLIENT_NODE), p.client), metadata)
+
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Base(path), nil
+}
+
+func (p *ZkRingGroup) DeregisterClient(ctx *thriftext.ThreadCtx, id string) error {
+	return p.client.Delete().ForPath(path.Join(p.clients.Root, id))
 }
 
 func (p *ZkRingGroup) GetName() string {

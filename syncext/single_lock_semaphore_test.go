@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/LiveRamp/hank-go-client/fixtures"
+	"time"
 )
 
 func TestLock(t *testing.T) {
@@ -24,6 +25,7 @@ func TestLock(t *testing.T) {
 		read = true
 	}()
 
+	time.Sleep(time.Second)
 	assert.False(t, read)
 	sem.Release()
 
@@ -32,3 +34,25 @@ func TestLock(t *testing.T) {
 	})
 
 }
+
+func TestInitialState(t *testing.T) {
+
+	sem := NewSingleLockSemaphore()
+
+	read := false
+
+	go func() {
+		sem.Read()
+		read = true
+	}()
+
+	time.Sleep(time.Second)
+	assert.False(t, read)
+	sem.Release()
+
+	fixtures.WaitUntilOrFail(t, func() bool {
+		return read
+	})
+
+}
+

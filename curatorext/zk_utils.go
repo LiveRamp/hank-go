@@ -96,9 +96,8 @@ func LoadThrift(ctx *thriftext.ThreadCtx, path string, client curator.CuratorFra
 }
 
 func CreateEphemeralSequential(root string, framework curator.CuratorFramework) thriftext.SetBytes {
-	return func(data []byte) error {
-		_, err := framework.Create().WithMode(curator.EPHEMERAL_SEQUENTIAL).ForPathWithData(root, data)
-		return err
+	return func(data []byte) (path string, err error) {
+		return framework.Create().WithMode(curator.EPHEMERAL_SEQUENTIAL).ForPathWithData(root, data)
 	}
 }
 

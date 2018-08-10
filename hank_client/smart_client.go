@@ -18,11 +18,18 @@ import (
 	"github.com/LiveRamp/hank-go-client/thriftext"
 
 	"github.com/pkg/errors"
+	"regexp"
+	"github.com/LiveRamp/hank-go-client/zk_coordinator"
 )
 
-const NUM_STAT_SAMPLES = 3
-const SAMPLE_SLEEP_TIME = time.Second
-const STAT_INTERVAL = time.Second * 30
+const NumStatSamples = 3
+const SampleSleepTime = time.Second
+const StatInterval = time.Second * 30
+
+//	we don't want to rebuild each time an updating host updates a version of a partition.  we'll catch it when
+//	it switches back to active.
+var AssignmentsRegex = regexp.MustCompile(fmt.Sprintf("hosts/[-0-9]+/%v", zk_coordinator.ASSIGNMENTS_PATH))
+var SkipRebuildPaths = []*regexp.Regexp{AssignmentsRegex}
 
 type RequestCounters struct {
 	requests  int64
@@ -74,6 +81,14 @@ type HankSmartClient struct {
 	connectionLock            *sync.Mutex
 	stopping                  *bool
 
+	clientId				  string
+
+	//	mostly for testing
+	numCacheRebuildTriggers		int
+	numSkippedRebuildTriggers 	int
+	numCreatedConnections		int
+	numClosedConnections		int
+
 	cache    *ccache.Cache
 	counters *RequestCounters
 
@@ -95,7 +110,7 @@ func New(
 	}
 
 	ctx := thriftext.NewThreadCtx()
-	registerErr := ringGroup.RegisterClient(ctx, metadata)
+	id, registerErr := ringGroup.RegisterClient(ctx, metadata)
 
 	if registerErr != nil {
 		log.WithError(registerErr).Error("error registering client")
@@ -120,6 +135,11 @@ func New(
 		make(map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool),
 		&sync.Mutex{},
 		&stopping,
+		id,
+		0,
+		0,
+		0,
+		0,
 		cache,
 		NewRequestCounters(),
 		connectionCacheLock,
@@ -141,8 +161,19 @@ func New(
 	return client, nil
 }
 
-func (p *HankSmartClient) OnChange() {
+func (p *HankSmartClient) OnChange(path string) {
+
+	for _, item := range SkipRebuildPaths {
+		if len(item.FindStringSubmatch(path)) > 0 {
+			p.numSkippedRebuildTriggers++
+			return
+		}
+	}
+
+	log.WithField("changed_path", path).Info("Triggering cache rebuild")
+	p.numCacheRebuildTriggers++
 	p.cacheUpdateLock.Release()
+
 }
 
 func (p *HankSmartClient) updateLoop(listenerLock *syncext.SingleLockSemaphore) {
@@ -163,6 +194,10 @@ func (p *HankSmartClient) updateLoop(listenerLock *syncext.SingleLockSemaphore) 
 
 }
 
+func (p* HankSmartClient) getNumCacheRebuildTriggers() int{
+	return p.numCacheRebuildTriggers
+}
+
 func (p *HankSmartClient) runtimeStatsLoop() {
 
 	lastCheck := time.Now().UnixNano()
@@ -174,19 +209,19 @@ func (p *HankSmartClient) runtimeStatsLoop() {
 			break
 		}
 
-		time.Sleep(STAT_INTERVAL)
+		time.Sleep(StatInterval)
 
 		serverTotalConns := make(map[string]int64)
 		serverLockedConns := make(map[string]int64)
 
-		for i := 0; i < NUM_STAT_SAMPLES; i++ {
+		for i := 0; i < NumStatSamples; i++ {
 			for server, conns := range p.serverToConnections {
 				conns, lockedConns := conns.GetConnectionLoad()
 				serverTotalConns[server] += conns
 				serverLockedConns[server] += lockedConns
 			}
 
-			time.Sleep(SAMPLE_SLEEP_TIME)
+			time.Sleep(SampleSleepTime)
 		}
 
 		for server, total := range serverTotalConns {
@@ -238,6 +273,8 @@ func (p *HankSmartClient) Stop() {
 		}
 	}
 
+	p.ringGroup.DeregisterClient(&thriftext.ThreadCtx{}, p.clientId)
+
 }
 
 func newFalse() *bool {
@@ -285,8 +322,10 @@ func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error 
 
 	for address, pool := range oldServerToConnections {
 		if _, ok := p.serverToConnections[address]; !ok {
+			log.WithField("address", address).Info("closing connections to server %v ", address)
 			for _, conn := range pool.GetConnections() {
 				conn.Disconnect()
+				p.numClosedConnections++
 			}
 		}
 	}
@@ -518,6 +557,8 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 				log.Info("Waiting for connections to complete")
 				wg.Wait()
+
+				p.numCreatedConnections += int(opts.NumConnectionsPerHost)
 
 				close(connections)
 

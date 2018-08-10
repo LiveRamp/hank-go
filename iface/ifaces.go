@@ -63,7 +63,9 @@ type RingGroup interface {
 
 	GetRing(ringNum RingID) Ring
 
-	RegisterClient(ctx *thriftext.ThreadCtx, metadata *hank.ClientMetadata) error
+	RegisterClient(ctx *thriftext.ThreadCtx, metadata *hank.ClientMetadata) (id string, err error)
+
+	DeregisterClient(ctx *thriftext.ThreadCtx, id string) error
 
 	GetClients() []*hank.ClientMetadata
 
@@ -101,6 +103,8 @@ type Host interface {
 	GetState() HostState
 
 	GetID() string
+
+	GetPath() string
 }
 
 type Partitioner interface {
@@ -115,6 +119,8 @@ type Domain interface {
 	GetPartitioner() Partitioner
 
 	GetNumParts() int32
+
+	GetPath() string
 }
 
 type HostDomainPartition interface {

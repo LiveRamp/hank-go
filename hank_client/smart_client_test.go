@@ -117,7 +117,11 @@ func TestIt(t *testing.T) {
 		SetNumConnectionsPerHost(2).
 		SetQueryTimeoutMs(100)
 
-	smartClient, _ := New(coord, "rg1", options)
+	smartClient, err := New(coord, "rg1", options)
+
+	if err != nil{
+		t.Fail()
+	}
 
 	//	check each record can be found
 	for key, value := range values {
@@ -125,7 +129,7 @@ func TestIt(t *testing.T) {
 		assert.Equal(t, value, string(val.Value))
 	}
 
-	_, err := smartClient.Get("fake", []byte("na"))
+	_, err = smartClient.Get("fake", []byte("na"))
 
 	assert.Equal(t, "domain fake not found", err.Error())
 
@@ -139,18 +143,26 @@ func TestIt(t *testing.T) {
 	//	when offline, try anyway if it's the only replica
 	setStateBlocking(t, host1, ctx, iface.HOST_OFFLINE)
 	fixtures.WaitUntilOrFail(t, func() bool {
-		updating, _ := smartClient.Get(domain0.GetName(), []byte("key1"))
+
+		updating, err := smartClient.Get(domain0.GetName(), []byte("key1"))
+
+		if err != nil{
+			return false
+		}
+
 		return reflect.DeepEqual("value1", string(updating.Value))
 	})
 
 	//	ok again when serving
 	setStateBlocking(t, host1, ctx, iface.HOST_SERVING)
 	fixtures.WaitUntilOrFail(t, func() bool {
-		updating, _ := smartClient.Get(domain0.GetName(), []byte("key1"))
+		updating, err := smartClient.Get(domain0.GetName(), []byte("key1"))
+		if err != nil{
+			return false
+		}
+
 		return reflect.DeepEqual("value1", string(updating.Value))
 	})
-
-	setStateBlocking(t, host0, ctx, iface.HOST_SERVING)
 
 	//	test when a new domain is added, the client picks it up
 	domain1, _ := coord.AddDomain(ctx, "second_domain", 2, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
@@ -162,13 +174,20 @@ func TestIt(t *testing.T) {
 	host0Domain2, _ := host0.AddDomain(ctx, domain1)
 	host0Domain2.AddPartition(ctx, iface.PartitionID(0))
 
+	setStateBlocking(t, host0, ctx, iface.HOST_SERVING)
+
 	fixtures.WaitUntilOrFail(t, func() bool {
 		return len(host1.GetAssignedDomains(ctx)) == 2 && len(host0.GetAssignedDomains(ctx)) == 2
 	})
 
 	//	verify that the client can query the domain now
 	fixtures.WaitUntilOrFail(t, func() bool {
-		updating, _ := smartClient.Get(domain1.GetName(), []byte("key1"))
+
+		updating, err := smartClient.Get(domain1.GetName(), []byte("key1"))
+		if err != nil{
+			return false
+		}
+
 		return reflect.DeepEqual("value1", string(updating.Value))
 	})
 
@@ -240,6 +259,91 @@ func TestIt(t *testing.T) {
 	close3()
 
 	fixtures.TeardownZookeeper(cluster, client)
+}
+
+
+func TestSelectiveCacheRebuilds(t *testing.T) {
+
+	cluster, client := fixtures.SetupZookeeper(t)
+
+	ctx := thriftext.NewThreadCtx()
+
+	coord, _ := zk_coordinator.NewZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+
+	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
+
+	rg1, _ := coord.AddRingGroup(ctx, "rg1")
+	ring1, _ := rg1.AddRing(ctx, iface.RingID(0))
+
+	host0, _ := ring1.AddHost(ctx, "localhost", 12345, []string{})
+	host0Domain, _ := host0.AddDomain(ctx, domain0)
+	host0Domain.AddPartition(ctx, iface.PartitionID(0))
+	assigned := host0.GetAssignedDomains(ctx)
+	partition := assigned[0].GetPartitions()[0]
+
+	options := NewHankSmartClientOptions().
+		SetNumConnectionsPerHost(1).
+		SetQueryTimeoutMs(100).
+		SetMinConnectionsPerPartition(1)
+
+	server1Values := make(map[string]string)
+	server1Values["key1"] = "value1"
+
+	handler := thrift_services.NewPartitionServerHandler(server1Values)
+	close1 := createServer(t, ctx, host0, handler)
+
+	fixtures.WaitUntilOrFail(t, queryMatches("key1", "value1", "rg1", domain0.GetName(), coord, options))
+
+	smartClient, _ := New(coord, "rg1", options)
+
+	assert.Equal(t, 0, smartClient.numCacheRebuildTriggers)
+	assert.Equal(t, 0, smartClient.numClosedConnections)
+	assert.Equal(t, 1, smartClient.numCreatedConnections)
+
+	// do something important.
+	rg1.AddRing(ctx, iface.RingID(1))
+	fixtures.WaitUntilOrFail(t, func() bool{
+		return smartClient.numCacheRebuildTriggers == 1
+	})
+
+	assert.Equal(t, 0, smartClient.numClosedConnections)
+	assert.Equal(t, 1, smartClient.numCreatedConnections)
+
+	assert.Equal(t, 0, smartClient.numSkippedRebuildTriggers)
+
+	//	update the partition version (eg, what a server does when updating)
+	partition.SetCurrentDomainVersion(ctx, iface.VersionID(1))
+	time.Sleep(time.Second * 2)
+
+	//	assert we skipped the update
+	fixtures.WaitUntilOrFail(t, func() bool {
+		return smartClient.numSkippedRebuildTriggers == 1
+	})
+	assert.Equal(t, 1, smartClient.numCacheRebuildTriggers)
+
+	smartClient2, _ := New(coord, "rg1", options)
+
+	//	make sure it registers
+	fixtures.WaitUntilOrFail(t, func() bool {
+		return len(rg1.GetClients()) == 2
+	})
+
+	//	assert this message wasn't passed at all
+	fixtures.WaitUntilOrFail(t, func() bool {
+		return smartClient.numSkippedRebuildTriggers == 1
+	})
+	assert.Equal(t, 1, smartClient.numCacheRebuildTriggers)
+
+	smartClient.Stop()
+	smartClient2.Stop()
+
+	close1()
+	fixtures.TeardownZookeeper(cluster, client)
+
 }
 
 func TestDeadHost(t *testing.T) {

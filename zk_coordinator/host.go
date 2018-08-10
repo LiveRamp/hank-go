@@ -65,6 +65,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating assignments node, path: ", assignmentsRoot)
 	}
+	partitionAssignments.AddListener(adapter)
 
 	statePath := path.Join(rootPath, STATE_PATH)
 	state, err := curatorext.NewStringWatchedNode(client,
@@ -77,7 +78,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 		return nil, errors.Wrapf(err, "error creating state node.  path: %v", statePath)
 	}
 
-	return &ZkHost{rootPath, node, partitionAssignments, state, listener}, nil
+	return &ZkHost{rootPath, node, partitionAssignments, state, listener, }, nil
 }
 
 func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, rootPath string) (interface{}, error) {
@@ -98,10 +99,10 @@ func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, liste
 
 	state, err := curatorext.LoadStringWatchedNode(client,
 		path.Join(rootPath, STATE_PATH), false)
-
 	if err != nil {
 		return nil, err
 	}
+
 	state.AddListener(adapter)
 
 	return &ZkHost{rootPath, node, assignments, state, listener}, nil
@@ -194,6 +195,10 @@ func (p *ZkHost) getPartitions(domainId iface.DomainID) []iface.HostDomainPartit
 
 //  public
 
+func (p *ZkHost) GetPath() string {
+	return p.path
+}
+
 func (p *ZkHost) GetID() string {
 	return path.Base(p.path)
 }
@@ -265,7 +270,7 @@ func (p *ZkHost) AddDomain(ctx *thriftext.ThreadCtx, domain iface.Domain) (iface
 		return nil, err
 	}
 
-	p.listener.OnChange()
+	p.listener.OnChange(domain.GetPath())
 
 	return newZkHostDomain(p, domainId), nil
 }
