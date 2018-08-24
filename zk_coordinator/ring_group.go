@@ -10,8 +10,8 @@ import (
 	"github.com/LiveRamp/hank-go-client/curatorext"
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
-	log "github.com/sirupsen/logrus"
 	"path/filepath"
+	"github.com/pkg/errors"
 )
 
 const CLIENT_ROOT string = "c"
@@ -59,8 +59,7 @@ func loadZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, 
 
 	err := curatorext.AssertExists(client, rgRootPath)
 	if err != nil {
-		log.WithError(err).Error("Error asserting zk rg path exists")
-		return nil, err
+		return nil, errors.Wrap(err, "Error asserting zk rg path exists")
 	}
 
 	multiListener := thriftext.NewMultiNotifier()
@@ -69,14 +68,12 @@ func loadZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, 
 	//	we are intentionally not notifying any listeners about new clients.  it's just noise.
 	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), &thriftext.NoOp{}, loadClientMetadata)
 	if err != nil {
-		log.WithError(err).Error("Error loading zk clients")
-		return nil, err
+		return nil, errors.Wrap(err, "Error loading zk clients")
 	}
 
 	rings, err := curatorext.NewZkWatchedMap(client, rgRootPath, multiListener, loadZkRing)
 	if err != nil {
-		log.WithError(err).Error("Error loading zk ring")
-		return nil, err
+		return nil, errors.Wrap(err, "Error loading zk ring")
 	}
 
 	return &ZkRingGroup{ringGroupPath: rgRootPath, client: client, clients: clients, rings: rings, localNotifier: multiListener}, nil
