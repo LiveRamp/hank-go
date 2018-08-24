@@ -8,7 +8,7 @@ import (
 	"github.com/LiveRamp/hank-go-client/curatorext"
 	"github.com/LiveRamp/hank-go-client/iface"
 	"github.com/LiveRamp/hank-go-client/thriftext"
-	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 const KEY_DOMAIN_ID_COUNTER string = ".domain_id_counter"
@@ -32,24 +32,20 @@ func NewZkCoordinator(client curator.CuratorFramework,
 	domains, dmError := curatorext.NewZkWatchedMap(client, domainsRoot, thriftext.NewMultiNotifier(), loadZkDomain)
 
 	if rgError != nil {
-		log.WithError(rgError).Error("Error loading zk ring group")
-		return nil, rgError
+		return nil, errors.Wrap(rgError, "Error loading zk ring group")
 	}
 
 	if dgError != nil {
-		log.WithError(dgError).Error("Error loading zk domain group")
-		return nil, dgError
+		return nil, errors.Wrap(dgError, "Error loading zk domain group")
 	}
 
 	if dmError != nil {
-		log.WithError(dmError).Error("Error loading zk domains")
-		return nil, dmError
+		return nil, errors.Wrap(dmError, "Error loading zk domains")
 	}
 
 	counter, error := getDomainIDCounter(client, path.Join(domainsRoot, KEY_DOMAIN_ID_COUNTER))
 	if error != nil {
-		log.WithError(error).Error("Error getting domain ID counter")
-		return nil, error
+		return nil, errors.Wrap(error, "Error getting domain ID counter")
 	}
 
 	return &ZkCoordinator{
