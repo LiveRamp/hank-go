@@ -126,7 +126,7 @@ func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor
 
 
 	backoffStrat := backoff.NewExponentialBackOff()
-	backoffStrat.MaxElapsedTime = time.Second * 10
+	backoffStrat.MaxElapsedTime = time.Second * 15
 
 	//	IF we don't require the node to exist, AND the path definitely doesn't exist, return early
 	if !requireData {
