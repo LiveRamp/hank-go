@@ -41,6 +41,11 @@ func CreateHostConnectionPool(connections []*HostConnection, hostShuffleSeed int
 
 	asMap := make(map[string][]*HostConnection)
 
+	if len(connections) == 0 {
+		return nil, nil
+	}
+
+
 	for _, connection := range connections {
 		address := connection.host.GetAddress().Print()
 

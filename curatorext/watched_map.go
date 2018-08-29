@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+	"fmt"
 )
 
 type Loader func(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error)
@@ -39,6 +40,9 @@ type ChildLoader struct {
 
 func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.TreeCacheEvent) error {
 
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
 	switch event.Type {
 	case cache.TreeCacheEventNodeUpdated:
 		fallthrough
@@ -46,7 +50,7 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 		fullChildPath := event.Data.Path()
 
 		if IsSubdirectory(p.root, fullChildPath) {
-			err := conditionalInsert(p.ctx, client, p.loader, p.listener, p.lock, p.internalData, fullChildPath)
+			err := conditionalInsert(p.ctx, client, p.loader, p.listener, p.internalData, fullChildPath)
 			p.listener.OnChange(fullChildPath)
 			if err != nil {
 				//	log here because it's called by zk events and doesn't ever percolate up to the user
@@ -56,16 +60,14 @@ func (p *ChildLoader) ChildEvent(client curator.CuratorFramework, event cache.Tr
 		}
 	case cache.TreeCacheEventNodeRemoved:
 		fullChildPath := event.Data.Path()
-		p.lock.Lock()
 		delete(p.internalData, path.Base(fullChildPath))
-		p.lock.Unlock()
 		p.listener.OnChange(fullChildPath)
 	}
 
 	return nil
 }
 
-func conditionalInsert(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, loader Loader, listener thriftext.DataChangeNotifier, lock *sync.Mutex, internalData map[string]interface{}, fullChildPath string) error {
+func conditionalInsert(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, loader Loader, listener thriftext.DataChangeNotifier, internalData map[string]interface{}, fullChildPath string) error {
 
 	newKey := path.Base(fullChildPath)
 
@@ -75,9 +77,7 @@ func conditionalInsert(ctx *thriftext.ThreadCtx, client curator.CuratorFramework
 	}
 
 	if item != nil {
-		lock.Lock()
 		internalData[newKey] = item
-		lock.Unlock()
 	}
 
 	return nil
@@ -85,13 +85,26 @@ func conditionalInsert(ctx *thriftext.ThreadCtx, client curator.CuratorFramework
 
 func NewZkWatchedMap(
 	client curator.CuratorFramework,
+	initialize bool,
 	root string,
 	listener thriftext.DataChangeNotifier,
 	loader Loader) (*ZkWatchedMap, error) {
 
 	internalData := make(map[string]interface{})
 
-	SafeEnsureParents(client, curator.PERSISTENT, root)
+	if initialize {
+		SafeEnsureParents(client, curator.PERSISTENT, root)
+	} else {
+
+		stat, err := client.CheckExists().ForPath(root)
+		if err != nil {
+			return nil, err
+		}
+
+		if stat == nil {
+			return nil, errors.New(fmt.Sprintf("cannot load watched map because root %v does not exist", root))
+		}
+	}
 
 	node := cache.NewTreeCache(client, root, cache.DefaultTreeCacheSelector).
 		SetMaxDepth(1).
@@ -108,11 +121,6 @@ func NewZkWatchedMap(
 		lock:         insertLock,
 	})
 
-	startError := node.Start()
-	if startError != nil {
-		return nil, startError
-	}
-
 	initialChildren, err := client.GetChildren().ForPath(root)
 	if err != nil {
 		return nil, err
@@ -122,10 +130,15 @@ func NewZkWatchedMap(
 
 	for _, element := range initialChildren {
 		child := path.Join(root, element)
-		err := conditionalInsert(ctx, client, loader, listener, insertLock, internalData, child)
+		err := conditionalInsert(ctx, client, loader, listener, internalData, child)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error loading initial child %v into root %v", root, child)
+			return nil, errors.Wrapf(err, "Error loading initial child %v into root %v", child, root)
 		}
+	}
+
+	startError := node.Start()
+	if startError != nil {
+		return nil, startError
 	}
 
 	return &ZkWatchedMap{node: node, client: client, Root: root, loader: loader, internalData: internalData}, nil

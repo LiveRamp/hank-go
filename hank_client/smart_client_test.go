@@ -19,7 +19,7 @@ func TestSmartClient(t *testing.T) {
 
 	ctx := thriftext.NewThreadCtx()
 
-	coordinator, _ := zk_coordinator.NewZkCoordinator(client,
+	coordinator, _ := zk_coordinator.InitializeZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",
@@ -55,7 +55,7 @@ func TestIt(t *testing.T) {
 
 	ctx := thriftext.NewThreadCtx()
 
-	coord, _ := zk_coordinator.NewZkCoordinator(client,
+	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",
@@ -268,7 +268,7 @@ func TestSelectiveCacheRebuilds(t *testing.T) {
 
 	ctx := thriftext.NewThreadCtx()
 
-	coord, _ := zk_coordinator.NewZkCoordinator(client,
+	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",
@@ -351,7 +351,7 @@ func TestDeadHost(t *testing.T) {
 
 	ctx := thriftext.NewThreadCtx()
 
-	coord, _ := zk_coordinator.NewZkCoordinator(client,
+	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",
@@ -385,6 +385,183 @@ func TestDeadHost(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
+func TestDeletedHost(t *testing.T) {
+	cluster, client := fixtures.SetupZookeeper(t)
+
+	ctx := thriftext.NewThreadCtx()
+
+	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+
+	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
+
+	rg0, _ := coord.AddRingGroup(ctx, "rg0")
+
+	serverValues := make(map[string]string)
+	serverValues["key1"] = "value1"
+
+	ring0, _ := rg0.AddRing(ctx, iface.RingID(0))
+	host0, _ := ring0.AddHost(ctx, "localhost", 12345, []string{})
+	host0Domain, _ := host0.AddDomain(ctx, domain0)
+	host0Domain.AddPartition(ctx, iface.PartitionID(0))
+
+	handler0 := thrift_services.NewPartitionServerHandler(serverValues)
+	close0 := createServer(t, ctx, host0, handler0)
+	setStateBlocking(t, host0, ctx, iface.HOST_SERVING)
+
+	ring1, _ := rg0.AddRing(ctx, iface.RingID(1))
+	host1, _ := ring1.AddHost(ctx, "localhost", 12346, []string{})
+	host1Domain, _ := host1.AddDomain(ctx, domain0)
+	host1Domain.AddPartition(ctx, iface.PartitionID(0))
+
+	handler1 := thrift_services.NewPartitionServerHandler(serverValues)
+	close1 := createServer(t, ctx, host1, handler1)
+	setStateBlocking(t, host1, ctx, iface.HOST_SERVING)
+
+	//	create client
+
+	options := NewHankSmartClientOptions().
+		SetNumConnectionsPerHost(2).
+		SetQueryTimeoutMs(100).
+		SetMinConnectionsPerPartition(1)
+
+	newClient, _ := New(coord, "rg0", options)
+
+	val, _ := newClient.get(domain0, []byte("key1"))
+	assert.Equal(t, []byte("value1"), val.Value)
+
+	fixtures.WaitUntilOrFail(t, func() bool {
+		return newClient.numCacheRebuildTriggers == 0
+	})
+
+	ring1.RemoveHost(ctx, "localhost", 12346)
+
+	time.Sleep(time.Second*5)
+
+	fixtures.WaitUntilOrFail(t, func() bool {
+		return newClient.numCacheRebuildTriggers > 0 &&
+			newClient.numSuccessfulCacheRefreshes > 0
+	})
+
+	val, _ = newClient.get(domain0, []byte("key1"))
+	assert.Equal(t, []byte("value1"), val.Value)
+
+	close0()
+	close1()
+
+	fixtures.TeardownZookeeper(cluster, client)
+}
+
+func TestUnresponsiveHost(t *testing.T) {
+	cluster, client := fixtures.SetupZookeeper(t)
+
+	ctx := thriftext.NewThreadCtx()
+
+	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+
+	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
+
+	rg0, _ := coord.AddRingGroup(ctx, "rg0")
+
+	serverValues := make(map[string]string)
+	serverValues["key1"] = "value1"
+
+	ring0, _ := rg0.AddRing(ctx, iface.RingID(0))
+	host0, _ := ring0.AddHost(ctx, "localhost", 12345, []string{})
+	host0Domain, _ := host0.AddDomain(ctx, domain0)
+	host0Domain.AddPartition(ctx, iface.PartitionID(0))
+
+	handler0 := thrift_services.NewPartitionServerHandler(serverValues)
+	close0 := createServer(t, ctx, host0, handler0)
+	setStateBlocking(t, host0, ctx, iface.HOST_SERVING)
+
+	ring1, _ := rg0.AddRing(ctx, iface.RingID(1))
+	host1, _ := ring1.AddHost(ctx, "localhost", 12346, []string{})
+	host1Domain, _ := host1.AddDomain(ctx, domain0)
+	host1Domain.AddPartition(ctx, iface.PartitionID(0))
+
+	//	second server is created but not responding to requests
+	setStateBlocking(t, host1, ctx, iface.HOST_SERVING)
+
+	//	create client
+
+	options := NewHankSmartClientOptions().
+		SetNumConnectionsPerHost(2).
+		SetQueryTimeoutMs(100).
+		SetMinConnectionsPerPartition(1)
+
+	smartClient, _ := New(coord, "rg0", options)
+
+	val, _ := smartClient.get(domain0, []byte("key1"))
+	assert.Equal(t, []byte("value1"), val.Value)
+
+	close0()
+
+	fixtures.TeardownZookeeper(cluster, client)
+}
+
+func TestOfflineHost(t *testing.T) {
+	cluster, client := fixtures.SetupZookeeper(t)
+
+	ctx := thriftext.NewThreadCtx()
+
+	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+
+	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
+
+	rg0, _ := coord.AddRingGroup(ctx, "rg0")
+
+	serverValues := make(map[string]string)
+	serverValues["key1"] = "value1"
+
+	ring0, _ := rg0.AddRing(ctx, iface.RingID(0))
+	host0, _ := ring0.AddHost(ctx, "localhost", 12345, []string{})
+	host0Domain, _ := host0.AddDomain(ctx, domain0)
+	host0Domain.AddPartition(ctx, iface.PartitionID(0))
+
+	handler0 := thrift_services.NewPartitionServerHandler(serverValues)
+	close0 := createServer(t, ctx, host0, handler0)
+	setStateBlocking(t, host0, ctx, iface.HOST_SERVING)
+
+	ring1, _ := rg0.AddRing(ctx, iface.RingID(1))
+	host1, _ := ring1.AddHost(ctx, "localhost", 12346, []string{})
+	host1Domain, _ := host1.AddDomain(ctx, domain0)
+	host1Domain.AddPartition(ctx, iface.PartitionID(0))
+
+	//	second server is but offline
+	setStateBlocking(t, host1, ctx, iface.HOST_OFFLINE)
+
+	//	create client
+	options := NewHankSmartClientOptions().
+		SetNumConnectionsPerHost(1).
+		SetQueryTimeoutMs(100).
+		SetMinConnectionsPerPartition(1)
+
+	smartClient, _ := New(coord, "rg0", options)
+
+	val, _ := smartClient.get(domain0, []byte("key1"))
+	assert.Equal(t, []byte("value1"), val.Value)
+
+	close0()
+
+	fixtures.TeardownZookeeper(cluster, client)
+}
+
+
+
+//	TODO host is offline / has no status.  new clients still start up.
+
 //	verify that the client fails fast when it's not able to connect to enough partition servers during creation.
 //	relies on SetMinConnectionsPerPartition being set in the options
 func TestFailConnect(t *testing.T) {
@@ -392,7 +569,7 @@ func TestFailConnect(t *testing.T) {
 
 	ctx := thriftext.NewThreadCtx()
 
-	coord, _ := zk_coordinator.NewZkCoordinator(client,
+	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",
@@ -466,7 +643,7 @@ func TestSkipConnectionCacheRebuild(t *testing.T) {
 
 	ctx := thriftext.NewThreadCtx()
 
-	coord, _ := zk_coordinator.NewZkCoordinator(client,
+	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",
@@ -487,7 +664,12 @@ func TestSkipConnectionCacheRebuild(t *testing.T) {
 		SetMinConnectionsPerPartition(1)
 
 	fixtures.WaitUntilOrFail(t, func() bool {
-		return len(coord.GetRingGroup("rg1").GetRing(0).GetHosts(ctx)[0].GetHostDomain(ctx, 0).GetPartitions()) == 1
+		hosts := coord.GetRingGroup("rg1").GetRing(0).GetHosts(ctx)
+		if len(hosts) == 0{
+			return false
+		}
+
+		return len(hosts[0].GetHostDomain(ctx, 0).GetPartitions()) == 1
 	})
 
 	server1Values := make(map[string]string)

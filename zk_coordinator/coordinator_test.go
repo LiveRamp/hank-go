@@ -146,7 +146,7 @@ func TestZkCoordinator(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 func createCoordinator(client curator.CuratorFramework) (*ZkCoordinator, error) {
-	return NewZkCoordinator(client,
+	return InitializeZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",

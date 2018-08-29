@@ -141,7 +141,7 @@ func byAddress(connections []*HostConnection) map[string][]*HostConnection {
 
 func setUpCoordinator(client curator.CuratorFramework) (*thriftext.ThreadCtx, iface.Domain) {
 	ctx := thriftext.NewThreadCtx()
-	cdr, _ := zk_coordinator.NewZkCoordinator(client,
+	cdr, _ := zk_coordinator.InitializeZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",

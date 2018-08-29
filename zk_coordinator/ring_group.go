@@ -39,14 +39,14 @@ func createZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework
 	curatorext.CreateWithParents(client, curator.PERSISTENT, rgRootPath, nil)
 
 	//	we are intentionally not notifying any listeners about new clients.  it's just noise.
-	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), &thriftext.NoOp{}, loadClientMetadata)
+	clients, err := curatorext.NewZkWatchedMap(client, true, path.Join(rgRootPath, CLIENT_ROOT), &thriftext.NoOp{}, loadClientMetadata)
 	if err != nil {
 		return nil, err
 	}
 
 	listener := thriftext.NewMultiNotifier()
 
-	rings, err := curatorext.NewZkWatchedMap(client, rgRootPath, listener, loadZkRing)
+	rings, err := curatorext.NewZkWatchedMap(client, true, rgRootPath, listener, loadZkRing)
 	if err != nil {
 		return nil, err
 	}
@@ -66,12 +66,12 @@ func loadZkRingGroup(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, 
 	multiListener.AddClient(listener)
 
 	//	we are intentionally not notifying any listeners about new clients.  it's just noise.
-	clients, err := curatorext.NewZkWatchedMap(client, path.Join(rgRootPath, CLIENT_ROOT), &thriftext.NoOp{}, loadClientMetadata)
+	clients, err := curatorext.NewZkWatchedMap(client, false, path.Join(rgRootPath, CLIENT_ROOT), &thriftext.NoOp{}, loadClientMetadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error loading zk clients")
 	}
 
-	rings, err := curatorext.NewZkWatchedMap(client, rgRootPath, multiListener, loadZkRing)
+	rings, err := curatorext.NewZkWatchedMap(client, false, rgRootPath, multiListener, loadZkRing)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error loading zk ring")
 	}

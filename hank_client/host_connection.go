@@ -213,6 +213,8 @@ func (p *HostConnection) OnDataChange(newVal interface{}, path string) (err erro
 					"attempt": tries,
 				}).WithError(err).Warn("error connecting to host")
 			}
+
+			tries++
 		}
 
 		return errors.Errorf("Failed to connect to host %v after %v retries.  Failing.", hostName, p.establishConnectionRetries)

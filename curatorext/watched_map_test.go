@@ -22,7 +22,7 @@ func TestZkWatchedMap(t *testing.T) {
 
 	root := "/some/path"
 
-	wmap, _ := NewZkWatchedMap(client, root, &thriftext.NoOp{}, LoadString)
+	wmap, _ := NewZkWatchedMap(client, true, root, &thriftext.NoOp{}, LoadString)
 	time.Sleep(time.Second)
 
 	child1Path := path.Join(root, "child1")

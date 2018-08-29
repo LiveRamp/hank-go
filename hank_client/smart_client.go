@@ -75,7 +75,6 @@ type HankSmartClient struct {
 
 	options *hankSmartClientOptions
 
-	hostsByAddress            map[string]*iface.PartitionServerAddress
 	serverToConnections       map[string]*HostConnectionPool
 	domainToPartToConnections map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool
 	connectionLock            *sync.Mutex
@@ -88,6 +87,7 @@ type HankSmartClient struct {
 	numSkippedRebuildTriggers 	int
 	numCreatedConnections		int
 	numClosedConnections		int
+	numSuccessfulCacheRefreshes int
 
 	cache    *ccache.Cache
 	counters *RequestCounters
@@ -130,12 +130,12 @@ func New(
 	client := &HankSmartClient{coordinator,
 		ringGroup,
 		options,
-		make(map[string]*iface.PartitionServerAddress),
 		make(map[string]*HostConnectionPool),
 		make(map[iface.DomainID]map[iface.PartitionID]*HostConnectionPool),
 		&sync.Mutex{},
 		&stopping,
 		id,
+		0,
 		0,
 		0,
 		0,
@@ -329,6 +329,8 @@ func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error 
 			}
 		}
 	}
+
+	p.numSuccessfulCacheRefreshes++
 
 	return nil
 }
@@ -575,7 +577,10 @@ func (p *HankSmartClient) buildNewConnectionCache(
 					return err
 				}
 			}
-			newServerToConnections[addressStr] = pool
+
+			if pool != nil {
+				newServerToConnections[addressStr] = pool
+			}
 		}
 	}
 
@@ -587,7 +592,12 @@ func (p *HankSmartClient) buildNewConnectionCache(
 
 			var connections []*HostConnection
 			for _, address := range addresses {
-				connections = append(connections, newServerToConnections[address.Print()].GetConnections()...)
+				addr := address.Print()
+
+				if newServerToConnections[addr] != nil {
+					connections = append(connections, newServerToConnections[addr].GetConnections()...)
+				}
+
 			}
 
 			servingConnections := countServingConnections(connections)
