@@ -1,7 +1,7 @@
 package hank_client
 
 import (
-	"fmt"
+	"github.com/curator-go/curator"
 	"reflect"
 	"testing"
 	"time"
@@ -19,12 +19,7 @@ func TestSmartClient(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
 	ctx := thriftext.NewThreadCtx()
-
-	coordinator, _ := zk_coordinator.InitializeZkCoordinator(client,
-		"/hank/domains",
-		"/hank/ring_groups",
-		"/hank/domain_groups",
-	)
+	coordinator, _ := initializeCoordinator(client)
 
 	rg, _ := coordinator.AddRingGroup(ctx, "group1")
 
@@ -55,12 +50,7 @@ func TestIt(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
 	ctx := thriftext.NewThreadCtx()
-
-	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
-		"/hank/domains",
-		"/hank/ring_groups",
-		"/hank/domain_groups",
-	)
+	coord, _ := initializeCoordinator(client)
 
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 2, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
@@ -268,12 +258,7 @@ func TestSelectiveCacheRebuilds(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
 	ctx := thriftext.NewThreadCtx()
-
-	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
-		"/hank/domains",
-		"/hank/ring_groups",
-		"/hank/domain_groups",
-	)
+	coord, _ := initializeCoordinator(client)
 
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
@@ -352,11 +337,7 @@ func TestDeadHost(t *testing.T) {
 
 	ctx := thriftext.NewThreadCtx()
 
-	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
-		"/hank/domains",
-		"/hank/ring_groups",
-		"/hank/domain_groups",
-	)
+	coord, _ := initializeCoordinator(client)
 
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
@@ -388,14 +369,8 @@ func TestDeadHost(t *testing.T) {
 
 func TestDeletedHost(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
-
 	ctx := thriftext.NewThreadCtx()
-
-	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
-		"/hank/domains",
-		"/hank/ring_groups",
-		"/hank/domain_groups",
-	)
+	coord, _ := initializeCoordinator(client)
 
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
@@ -439,7 +414,7 @@ func TestDeletedHost(t *testing.T) {
 
 	ring1.RemoveHost(ctx, "localhost", 12346)
 
-	time.Sleep(time.Second*5)
+	time.Sleep(time.Second * 5)
 
 	fixtures.WaitUntilOrFail(t, func() bool {
 		return newClient.numCacheRebuildTriggers > 0 &&
@@ -455,16 +430,20 @@ func TestDeletedHost(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
+func initializeCoordinator(client curator.CuratorFramework) (*zk_coordinator.ZkCoordinator, error) {
+	return zk_coordinator.InitializeZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+}
+
 func TestUnresponsiveHost(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
 	ctx := thriftext.NewThreadCtx()
 
-	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
-		"/hank/domains",
-		"/hank/ring_groups",
-		"/hank/domain_groups",
-	)
+	coord, _ := initializeCoordinator(client)
 
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
@@ -507,16 +486,72 @@ func TestUnresponsiveHost(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
+//	TODO add a host while client is connected
+
+func TestAddRemoveHost(t *testing.T){
+	cluster, client := fixtures.SetupZookeeper(t)
+	ctx := thriftext.NewThreadCtx()
+	coord, _ := initializeCoordinator(client)
+
+	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
+
+	rg0, _ := coord.AddRingGroup(ctx, "rg0")
+
+	serverValues := make(map[string]string)
+	serverValues["key1"] = "value1"
+
+	ring0, _ := rg0.AddRing(ctx, iface.RingID(0))
+	host0, _ := ring0.AddHost(ctx, "localhost", 12345, []string{})
+	host0Domain, _ := host0.AddDomain(ctx, domain0)
+	host0Domain.AddPartition(ctx, iface.PartitionID(0))
+
+	handler0 := thrift_services.NewPartitionServerHandler(serverValues)
+	close0 := createServer(t, ctx, host0, handler0)
+	setStateBlocking(t, host0, ctx, iface.HOST_SERVING)
+
+	options := NewHankSmartClientOptions().
+		SetNumConnectionsPerHost(1).
+		SetQueryTimeoutMs(100).
+		SetMinConnectionsPerPartition(1)
+
+	smartClient, _ := New(coord, "rg0", options)
+
+	//	verify we're up
+	val, _ := smartClient.get(domain0, []byte("key1"))
+	assert.Equal(t, []byte("value1"), val.Value)
+
+	//	add a ring
+	ring1, _ := rg0.AddRing(ctx, iface.RingID(1))
+	host1, _ := ring1.AddHost(ctx, "localhost", 12346, []string{})
+	host1Domain, _ := host1.AddDomain(ctx, domain0)
+	host1Domain.AddPartition(ctx, iface.PartitionID(0))
+
+	//	add a host w/ different data
+	server1Values := make(map[string]string)
+	server1Values["key1"] = "value2"
+
+	handler1 := thrift_services.NewPartitionServerHandler(server1Values)
+	close1 := createServer(t, ctx, host1, handler1)
+	setStateBlocking(t, host1, ctx, iface.HOST_SERVING)
+
+	//	remove old host
+	ring0.RemoveHost(ctx, "localhost", 12345)
+
+	//	verify new result is new data
+	val, _ = smartClient.get(domain0, []byte("key1"))
+	assert.Equal(t, []byte("value2"), val.Value)
+
+	close0()
+	close1()
+
+	fixtures.TeardownZookeeper(cluster, client)
+
+}
+
 func TestOfflineHost(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
-
 	ctx := thriftext.NewThreadCtx()
-
-	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
-		"/hank/domains",
-		"/hank/ring_groups",
-		"/hank/domain_groups",
-	)
+	coord, _ := initializeCoordinator(client)
 
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
@@ -566,14 +601,8 @@ func TestOfflineHost(t *testing.T) {
 //	relies on SetMinConnectionsPerPartition being set in the options
 func TestFailConnect(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
-
 	ctx := thriftext.NewThreadCtx()
-
-	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
-		"/hank/domains",
-		"/hank/ring_groups",
-		"/hank/domain_groups",
-	)
+	coord, _ := initializeCoordinator(client)
 
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
@@ -640,14 +669,8 @@ func TestFailConnect(t *testing.T) {
 func TestSkipConnectionCacheRebuild(t *testing.T) {
 
 	cluster, client := fixtures.SetupZookeeper(t)
-
 	ctx := thriftext.NewThreadCtx()
-
-	coord, _ := zk_coordinator.InitializeZkCoordinator(client,
-		"/hank/domains",
-		"/hank/ring_groups",
-		"/hank/domain_groups",
-	)
+	coord, _ := initializeCoordinator(client)
 
 	domain0, _ := coord.AddDomain(ctx, "existent_domain", 1, "", "", "com.liveramp.hank.partitioner.Murmur64Partitioner", []string{})
 
