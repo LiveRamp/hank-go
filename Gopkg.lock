@@ -42,16 +42,10 @@
   version = "v2.0.2"
 
 [[projects]]
-  name = "github.com/kr/pretty"
+  name = "github.com/pkg/errors"
   packages = ["."]
-  revision = "73f6ac0b30a98e433b289500d779f50c1a6f0712"
-  version = "v0.1.0"
-
-[[projects]]
-  name = "github.com/kr/text"
-  packages = ["."]
-  revision = "e2ffdb16a802fe2bb95e2e35ff34f0e53aeef34f"
-  version = "v0.1.0"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -66,8 +60,8 @@
 [[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
-  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
-  version = "v1.1.0"
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -115,15 +109,9 @@
   ]
   revision = "e072cadbbdc8dd3d3ffa82b8b4b9304c261d9311"
 
-[[projects]]
-  branch = "v1"
-  name = "gopkg.in/check.v1"
-  packages = ["."]
-  revision = "788fd78401277ebd861206a03c884797c6ec5541"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "80285b9cd58a6425a6b4f15026904fa03a09d564799813b2e41c1c7e7f1a3cb0"
+  inputs-digest = "b60aa877f6f7d8b6afed1994ec31c9c53c4a816251026e8e4f50a030dcb34cf8"
   solver-name = "gps-cdcl"
   solver-version = 1
