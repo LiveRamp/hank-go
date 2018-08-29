@@ -486,8 +486,6 @@ func TestUnresponsiveHost(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
-//	TODO add a host while client is connected
-
 func TestAddRemoveHost(t *testing.T){
 	cluster, client := fixtures.SetupZookeeper(t)
 	ctx := thriftext.NewThreadCtx()
