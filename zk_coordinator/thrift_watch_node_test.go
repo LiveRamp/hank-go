@@ -25,6 +25,7 @@ func TestUpdateWatchedNode(t *testing.T) {
 	node, _ := curatorext.NewThriftWatchedNode(client, curator.PERSISTENT, "/some/path", ctx, iface.NewHostAssignmentMetadata, hostData)
 	node2, _ := curatorext.LoadThriftWatchedNode(client, "/some/path", iface.NewHostAssignmentMetadata)
 
+
 	node.Update(ctx, func(val interface{}) interface{} {
 		meta := val.(*hank.HostAssignmentsMetadata)
 		meta.Domains[1] = hank.NewHostDomainMetadata()

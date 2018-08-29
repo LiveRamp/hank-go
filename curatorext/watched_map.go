@@ -93,7 +93,12 @@ func NewZkWatchedMap(
 	internalData := make(map[string]interface{})
 
 	if initialize {
-		SafeEnsureParents(client, curator.PERSISTENT, root)
+
+		err := CreateWithParents(client, curator.PERSISTENT, root, nil)
+		if err != nil {
+			return nil, err
+		}
+
 	} else {
 
 		stat, err := client.CheckExists().ForPath(root)

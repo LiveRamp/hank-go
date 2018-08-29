@@ -2,6 +2,7 @@ package curatorext
 
 import (
 	"errors"
+	"fmt"
 	"path"
 	"path/filepath"
 	"time"
@@ -41,7 +42,7 @@ func WaitUntilOrErr(expectTrue func() bool) error {
 func AssertEmpty(client curator.CuratorFramework, fullPath string) error {
 	exists, _ := client.CheckExists().ForPath(fullPath)
 	if exists != nil {
-		return errors.New("Domain group already exists!")
+		return errors.New("domain group already exists")
 	}
 	return nil
 }
@@ -49,12 +50,22 @@ func AssertEmpty(client curator.CuratorFramework, fullPath string) error {
 func AssertExists(client curator.CuratorFramework, fullPath string) error {
 	exists, _ := client.CheckExists().ForPath(fullPath)
 	if exists == nil {
-		return errors.New("Domain group doesn't exist!")
+		return errors.New("domain group doesn't exist")
 	}
 	return nil
 }
 
 func CreateWithParents(client curator.CuratorFramework, mode curator.CreateMode, root string, data []byte) error {
+
+	stat, err := client.CheckExists().ForPath(root)
+	if err != nil{
+		return err
+	}
+
+	if stat != nil {
+		return errors.New(fmt.Sprintf("cannot create directory %v: already exists", root))
+	}
+
 	builder := client.Create().WithMode(mode).CreatingParentsIfNeeded()
 
 	if data != nil {
@@ -65,20 +76,6 @@ func CreateWithParents(client curator.CuratorFramework, mode curator.CreateMode,
 		return createErr
 	}
 
-}
-
-func SafeEnsureParents(client curator.CuratorFramework, mode curator.CreateMode, root string) error {
-
-	parentExists, existsErr := client.CheckExists().ForPath(root)
-	if existsErr != nil {
-		return existsErr
-	}
-
-	if parentExists == nil {
-		return CreateWithParents(client, mode, root, nil)
-	}
-
-	return nil
 }
 
 func LoadThrift(ctx *thriftext.ThreadCtx, path string, client curator.CuratorFramework, tStruct thrift.TStruct) error {

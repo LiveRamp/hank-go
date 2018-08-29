@@ -1,6 +1,7 @@
 package hank_client
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -422,7 +423,6 @@ func TestDeletedHost(t *testing.T) {
 	setStateBlocking(t, host1, ctx, iface.HOST_SERVING)
 
 	//	create client
-
 	options := NewHankSmartClientOptions().
 		SetNumConnectionsPerHost(2).
 		SetQueryTimeoutMs(100).

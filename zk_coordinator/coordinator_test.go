@@ -16,7 +16,12 @@ import (
 func TestZkCoordinator(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
-	zkCoordinator, err1 := createCoordinator(client)
+	zkCoordinator, err1 := InitializeZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+
 	zkCoordinator3, err2 := createCoordinator(client)
 
 	ctx := thriftext.NewThreadCtx()
@@ -146,7 +151,7 @@ func TestZkCoordinator(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 func createCoordinator(client curator.CuratorFramework) (*ZkCoordinator, error) {
-	return InitializeZkCoordinator(client,
+	return NewZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",
