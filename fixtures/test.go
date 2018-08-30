@@ -57,8 +57,6 @@ func SetupZookeeper(t *testing.T) (*zk.TestCluster, curator.CuratorFramework) {
 		return nil, nil
 	}
 
-	cluster.StartAllServers()
-
 	client := curator.NewClient("127.0.0.1:"+strconv.Itoa(cluster.Servers[0].Port), curator.NewRetryNTimes(1, time.Second))
 	client.Start()
 
