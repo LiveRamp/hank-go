@@ -9,12 +9,13 @@ import (
 	"github.com/curator-go/curator/recipes/cache"
 	"github.com/samuel/go-zookeeper/zk"
 
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/thriftext"
 
-	log "github.com/sirupsen/logrus"
-	"sync"
-	errors2 "github.com/pkg/errors"
 	"fmt"
+	"sync"
+
+	errors2 "github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type Constructor func() interface{}
@@ -32,7 +33,7 @@ type ZkWatchedNode struct {
 	serializer   Serializer
 	deserializer Deserializer
 
-	lock 		*sync.Mutex
+	lock *sync.Mutex
 
 	value interface{}
 	stat  *zk.Stat
@@ -123,7 +124,6 @@ func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor
 	if err != nil {
 		return nil, err
 	}
-
 
 	backoffStrat := backoff.NewExponentialBackOff()
 	backoffStrat.MaxElapsedTime = time.Second * 15

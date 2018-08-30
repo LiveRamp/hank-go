@@ -10,10 +10,10 @@ import (
 
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/hank_client"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	"github.com/LiveRamp/hank-go/hank_client"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
+	"github.com/LiveRamp/hank-go/zk_coordinator"
 
 	log "github.com/sirupsen/logrus"
 )

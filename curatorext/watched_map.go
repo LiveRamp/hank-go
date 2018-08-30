@@ -6,14 +6,15 @@ import (
 	"github.com/curator-go/curator"
 	"github.com/curator-go/curator/recipes/cache"
 
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/thriftext"
 
 	log "github.com/sirupsen/logrus"
 
 	"sync"
 
-	"github.com/pkg/errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 type Loader func(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error)

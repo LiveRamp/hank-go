@@ -9,7 +9,7 @@ import (
 
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 
-	"github.com/LiveRamp/hank-go-client/iface"
+	"github.com/LiveRamp/hank-go/iface"
 
 	"github.com/pkg/errors"
 
@@ -44,7 +44,6 @@ func CreateHostConnectionPool(connections []*HostConnection, hostShuffleSeed int
 	if len(connections) == 0 {
 		return nil, nil
 	}
-
 
 	for _, connection := range connections {
 		address := connection.host.GetAddress().Print()

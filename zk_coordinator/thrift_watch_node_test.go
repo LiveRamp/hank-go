@@ -6,10 +6,10 @@ import (
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/curatorext"
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/curatorext"
+	"github.com/LiveRamp/hank-go/fixtures"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
 )
 
 //	TODO get some non-hank dummy thrift types and test this in the curatorext package
@@ -24,7 +24,6 @@ func TestUpdateWatchedNode(t *testing.T) {
 
 	node, _ := curatorext.NewThriftWatchedNode(client, curator.PERSISTENT, "/some/path", ctx, iface.NewHostAssignmentMetadata, hostData)
 	node2, _ := curatorext.LoadThriftWatchedNode(client, "/some/path", iface.NewHostAssignmentMetadata)
-
 
 	node.Update(ctx, func(val interface{}) interface{} {
 		meta := val.(*hank.HostAssignmentsMetadata)

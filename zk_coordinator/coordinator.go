@@ -5,9 +5,9 @@ import (
 
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/curatorext"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/curatorext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
 	"github.com/pkg/errors"
 )
 
@@ -33,7 +33,7 @@ func InitializeZkCoordinator(client curator.CuratorFramework,
 func NewZkCoordinator(client curator.CuratorFramework,
 	domainsRoot string,
 	ringGroupsRoot string,
-	domainGroupsRoot string) (*ZkCoordinator, error){
+	domainGroupsRoot string) (*ZkCoordinator, error) {
 	return newZkCoordinator(client, false, domainsRoot, ringGroupsRoot, domainGroupsRoot)
 }
 

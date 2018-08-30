@@ -6,9 +6,9 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/syncext"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/syncext"
+	"github.com/LiveRamp/hank-go/thriftext"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

@@ -8,11 +8,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thrift_services"
-	"github.com/LiveRamp/hank-go-client/thriftext"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	"github.com/LiveRamp/hank-go/fixtures"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thrift_services"
+	"github.com/LiveRamp/hank-go/thriftext"
+	"github.com/LiveRamp/hank-go/zk_coordinator"
 )
 
 func TestSmartClient(t *testing.T) {
@@ -110,7 +110,7 @@ func TestIt(t *testing.T) {
 
 	smartClient, err := New(coord, "rg1", options)
 
-	if err != nil{
+	if err != nil {
 		t.Fail()
 	}
 
@@ -137,7 +137,7 @@ func TestIt(t *testing.T) {
 
 		updating, err := smartClient.Get(domain0.GetName(), []byte("key1"))
 
-		if err != nil{
+		if err != nil {
 			return false
 		}
 
@@ -148,7 +148,7 @@ func TestIt(t *testing.T) {
 	setStateBlocking(t, host1, ctx, iface.HOST_SERVING)
 	fixtures.WaitUntilOrFail(t, func() bool {
 		updating, err := smartClient.Get(domain0.GetName(), []byte("key1"))
-		if err != nil{
+		if err != nil {
 			return false
 		}
 
@@ -175,7 +175,7 @@ func TestIt(t *testing.T) {
 	fixtures.WaitUntilOrFail(t, func() bool {
 
 		updating, err := smartClient.Get(domain1.GetName(), []byte("key1"))
-		if err != nil{
+		if err != nil {
 			return false
 		}
 
@@ -252,7 +252,6 @@ func TestIt(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
-
 func TestSelectiveCacheRebuilds(t *testing.T) {
 
 	cluster, client := fixtures.SetupZookeeper(t)
@@ -292,7 +291,7 @@ func TestSelectiveCacheRebuilds(t *testing.T) {
 
 	// do something important.
 	rg1.AddRing(ctx, iface.RingID(1))
-	fixtures.WaitUntilOrFail(t, func() bool{
+	fixtures.WaitUntilOrFail(t, func() bool {
 		return smartClient.numCacheRebuildTriggers == 1
 	})
 
@@ -487,7 +486,7 @@ func TestUnresponsiveHost(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
-func TestAddRemoveHost(t *testing.T){
+func TestAddRemoveHost(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 	ctx := thriftext.NewThreadCtx()
 	coord, _ := initializeCoordinator(client)
@@ -592,8 +591,6 @@ func TestOfflineHost(t *testing.T) {
 	fixtures.TeardownZookeeper(cluster, client)
 }
 
-
-
 //	TODO host is offline / has no status.  new clients still start up.
 
 //	verify that the client fails fast when it's not able to connect to enough partition servers during creation.
@@ -687,7 +684,7 @@ func TestSkipConnectionCacheRebuild(t *testing.T) {
 
 	fixtures.WaitUntilOrFail(t, func() bool {
 		hosts := coord.GetRingGroup("rg1").GetRing(0).GetHosts(ctx)
-		if len(hosts) == 0{
+		if len(hosts) == 0 {
 			return false
 		}
 

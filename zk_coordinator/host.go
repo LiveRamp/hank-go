@@ -10,9 +10,9 @@ import (
 	"github.com/curator-go/curator"
 	"github.com/satori/go.uuid"
 
-	"github.com/LiveRamp/hank-go-client/curatorext"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/curatorext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
 
 	"github.com/pkg/errors"
 )
@@ -80,7 +80,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 		return nil, errors.Wrapf(err, "error creating state node.  path: %v", statePath)
 	}
 
-	return &ZkHost{rootPath, node, partitionAssignments, state, client, listener, }, nil
+	return &ZkHost{rootPath, node, partitionAssignments, state, client, listener}, nil
 }
 
 func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, rootPath string) (interface{}, error) {

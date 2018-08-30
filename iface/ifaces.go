@@ -5,7 +5,7 @@ import (
 
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/thriftext"
 )
 
 /*

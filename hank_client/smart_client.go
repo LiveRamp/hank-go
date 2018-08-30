@@ -13,13 +13,14 @@ import (
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 	"github.com/karlseguin/ccache"
 
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/syncext"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/syncext"
+	"github.com/LiveRamp/hank-go/thriftext"
 
-	"github.com/pkg/errors"
 	"regexp"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+
+	"github.com/LiveRamp/hank-go/zk_coordinator"
+	"github.com/pkg/errors"
 )
 
 const NumStatSamples = 3
@@ -80,13 +81,13 @@ type HankSmartClient struct {
 	connectionLock            *sync.Mutex
 	stopping                  *bool
 
-	clientId				  string
+	clientId string
 
 	//	mostly for testing
-	numCacheRebuildTriggers		int
-	numSkippedRebuildTriggers 	int
-	numCreatedConnections		int
-	numClosedConnections		int
+	numCacheRebuildTriggers     int
+	numSkippedRebuildTriggers   int
+	numCreatedConnections       int
+	numClosedConnections        int
 	numSuccessfulCacheRefreshes int
 
 	cache    *ccache.Cache
@@ -194,7 +195,7 @@ func (p *HankSmartClient) updateLoop(listenerLock *syncext.SingleLockSemaphore) 
 
 }
 
-func (p* HankSmartClient) getNumCacheRebuildTriggers() int{
+func (p *HankSmartClient) getNumCacheRebuildTriggers() int {
 	return p.numCacheRebuildTriggers
 }
 
@@ -454,7 +455,7 @@ func (p *HankSmartClient) buildNewConnectionCache(
 		hosts := ring.GetHosts(ctx)
 
 		log.WithFields(log.Fields{
-			"ring": ring.GetNum(),
+			"ring":      ring.GetNum(),
 			"num_hosts": len(hosts),
 		}).Info("Building connection cache for ring")
 

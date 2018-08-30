@@ -8,8 +8,8 @@ import (
 
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/fixtures"
+	"github.com/LiveRamp/hank-go/thriftext"
 )
 
 func LoadString(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error) {

@@ -9,11 +9,11 @@ import (
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thrift_services"
-	"github.com/LiveRamp/hank-go-client/thriftext"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	"github.com/LiveRamp/hank-go/fixtures"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thrift_services"
+	"github.com/LiveRamp/hank-go/thriftext"
+	"github.com/LiveRamp/hank-go/zk_coordinator"
 	log "github.com/sirupsen/logrus"
 )
 

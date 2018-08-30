@@ -7,9 +7,9 @@ import (
 
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/curatorext"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/curatorext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
 )
 
 var RING_REGEX = regexp.MustCompile("ring-([0-9]+)")
@@ -90,10 +90,10 @@ func (p *ZkRing) GetHosts(ctx *thriftext.ThreadCtx) []iface.Host {
 	return hosts
 }
 
-func (p *ZkRing) RemoveHost(ctx *thriftext.ThreadCtx, hostName string, port int) (bool) {
+func (p *ZkRing) RemoveHost(ctx *thriftext.ThreadCtx, hostName string, port int) bool {
 
 	for _, item := range p.GetHosts(ctx) {
-		if(*item.GetAddress() == iface.PartitionServerAddress{HostName: hostName, PortNumber: int32(port)}){
+		if (*item.GetAddress() == iface.PartitionServerAddress{HostName: hostName, PortNumber: int32(port)}) {
 			item.Delete()
 			return true
 		}

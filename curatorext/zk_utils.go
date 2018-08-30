@@ -11,7 +11,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/thriftext"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -58,7 +58,7 @@ func AssertExists(client curator.CuratorFramework, fullPath string) error {
 func CreateWithParents(client curator.CuratorFramework, mode curator.CreateMode, root string, data []byte) error {
 
 	stat, err := client.CheckExists().ForPath(root)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 

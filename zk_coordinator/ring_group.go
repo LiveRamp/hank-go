@@ -7,10 +7,11 @@ import (
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/curatorext"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
 	"path/filepath"
+
+	"github.com/LiveRamp/hank-go/curatorext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
 	"github.com/pkg/errors"
 )
 
