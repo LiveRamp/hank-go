@@ -141,6 +141,10 @@ func (p *HostConnection) Get(id iface.DomainID, key []byte, isLockHeld bool) (*h
 		p.Disconnect()
 		p.Unlock()
 		return nil, err
+	} else if resp == nil {
+		p.Disconnect()
+		p.Unlock()
+		return nil, errors.Errorf("nil response from server")
 	} else if resp.IsSetXception() {
 		p.Disconnect()
 		p.Unlock()
