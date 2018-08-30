@@ -409,7 +409,8 @@ func TestDeletedHost(t *testing.T) {
 	assert.Equal(t, []byte("value1"), val.Value)
 
 	fixtures.WaitUntilOrFail(t, func() bool {
-		return newClient.numCacheRebuildTriggers == 0
+		return newClient.numCacheRebuildTriggers == 0 &&
+			len(newClient.serverToConnections) == 2
 	})
 
 	ring1.RemoveHost(ctx, "localhost", 12346)
