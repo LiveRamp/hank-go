@@ -6,9 +6,9 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/syncext"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/syncext"
+	"github.com/LiveRamp/hank-go/thriftext"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -141,6 +141,10 @@ func (p *HostConnection) Get(id iface.DomainID, key []byte, isLockHeld bool) (*h
 		p.Disconnect()
 		p.Unlock()
 		return nil, err
+	} else if resp == nil {
+		p.Disconnect()
+		p.Unlock()
+		return nil, errors.Errorf("nil response from server")
 	} else if resp.IsSetXception() {
 		p.Disconnect()
 		p.Unlock()
@@ -213,6 +217,8 @@ func (p *HostConnection) OnDataChange(newVal interface{}, path string) (err erro
 					"attempt": tries,
 				}).WithError(err).Warn("error connecting to host")
 			}
+
+			tries++
 		}
 
 		return errors.Errorf("Failed to connect to host %v after %v retries.  Failing.", hostName, p.establishConnectionRetries)

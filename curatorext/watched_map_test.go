@@ -8,8 +8,8 @@ import (
 
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/fixtures"
+	"github.com/LiveRamp/hank-go/thriftext"
 )
 
 func LoadString(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, path string) (interface{}, error) {
@@ -22,7 +22,7 @@ func TestZkWatchedMap(t *testing.T) {
 
 	root := "/some/path"
 
-	wmap, _ := NewZkWatchedMap(client, root, &thriftext.NoOp{}, LoadString)
+	wmap, _ := NewZkWatchedMap(client, true, root, &thriftext.NoOp{}, LoadString)
 	time.Sleep(time.Second)
 
 	child1Path := path.Join(root, "child1")

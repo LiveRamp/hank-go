@@ -5,8 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/LiveRamp/hank-go-client/fixtures"
 	"time"
+
+	"github.com/LiveRamp/hank-go/fixtures"
 )
 
 func TestLock(t *testing.T) {
@@ -55,4 +56,3 @@ func TestInitialState(t *testing.T) {
 	})
 
 }
-

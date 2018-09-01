@@ -5,9 +5,9 @@ import (
 
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/curatorext"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/curatorext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
 	"github.com/pkg/errors"
 )
 
@@ -22,14 +22,30 @@ type ZkCoordinator struct {
 	domainIDCounter *curatorext.ZkWatchedNode
 }
 
-func NewZkCoordinator(client curator.CuratorFramework,
+func InitializeZkCoordinator(client curator.CuratorFramework,
 	domainsRoot string,
 	ringGroupsRoot string,
 	domainGroupsRoot string) (*ZkCoordinator, error) {
 
-	ringGroups, rgError := curatorext.NewZkWatchedMap(client, ringGroupsRoot, thriftext.NewMultiNotifier(), loadZkRingGroup)
-	domainGroups, dgError := curatorext.NewZkWatchedMap(client, domainGroupsRoot, thriftext.NewMultiNotifier(), loadZkDomainGroup)
-	domains, dmError := curatorext.NewZkWatchedMap(client, domainsRoot, thriftext.NewMultiNotifier(), loadZkDomain)
+	return newZkCoordinator(client, true, domainsRoot, ringGroupsRoot, domainGroupsRoot)
+}
+
+func NewZkCoordinator(client curator.CuratorFramework,
+	domainsRoot string,
+	ringGroupsRoot string,
+	domainGroupsRoot string) (*ZkCoordinator, error) {
+	return newZkCoordinator(client, false, domainsRoot, ringGroupsRoot, domainGroupsRoot)
+}
+
+func newZkCoordinator(client curator.CuratorFramework,
+	initialize bool,
+	domainsRoot string,
+	ringGroupsRoot string,
+	domainGroupsRoot string) (*ZkCoordinator, error) {
+
+	ringGroups, rgError := curatorext.NewZkWatchedMap(client, initialize, ringGroupsRoot, thriftext.NewMultiNotifier(), loadZkRingGroup)
+	domainGroups, dgError := curatorext.NewZkWatchedMap(client, initialize, domainGroupsRoot, thriftext.NewMultiNotifier(), loadZkDomainGroup)
+	domains, dmError := curatorext.NewZkWatchedMap(client, initialize, domainsRoot, thriftext.NewMultiNotifier(), loadZkDomain)
 
 	if rgError != nil {
 		return nil, errors.Wrap(rgError, "Error loading zk ring group")

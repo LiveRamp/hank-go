@@ -8,11 +8,11 @@ import (
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thrift_services"
-	"github.com/LiveRamp/hank-go-client/thriftext"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	"github.com/LiveRamp/hank-go/fixtures"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thrift_services"
+	"github.com/LiveRamp/hank-go/thriftext"
+	"github.com/LiveRamp/hank-go/zk_coordinator"
 )
 
 func createHostServer(t *testing.T, ctx *thriftext.ThreadCtx, client curator.CuratorFramework, i int, server hank.PartitionServer) (iface.Host, func()) {

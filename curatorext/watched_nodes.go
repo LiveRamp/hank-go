@@ -6,7 +6,7 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/thriftext"
 )
 
 //  thrift

@@ -5,7 +5,7 @@ import (
 
 	"github.com/LiveRamp/hank/hank-core/src/main/go/hank"
 
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/thriftext"
 )
 
 /*
@@ -52,6 +52,8 @@ type Ring interface {
 	GetHosts(ctx *thriftext.ThreadCtx) []Host
 
 	GetNum() RingID
+
+	RemoveHost(ctx *thriftext.ThreadCtx, hostName string, port int) bool
 }
 
 type RingGroup interface {
@@ -105,6 +107,8 @@ type Host interface {
 	GetID() string
 
 	GetPath() string
+
+	Delete()
 }
 
 type Partitioner interface {

@@ -8,15 +8,20 @@ import (
 	"github.com/curator-go/curator"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/fixtures"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
 )
 
 func TestZkCoordinator(t *testing.T) {
 	cluster, client := fixtures.SetupZookeeper(t)
 
-	zkCoordinator, err1 := createCoordinator(client)
+	zkCoordinator, err1 := InitializeZkCoordinator(client,
+		"/hank/domains",
+		"/hank/ring_groups",
+		"/hank/domain_groups",
+	)
+
 	zkCoordinator3, err2 := createCoordinator(client)
 
 	ctx := thriftext.NewThreadCtx()

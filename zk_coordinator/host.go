@@ -10,9 +10,9 @@ import (
 	"github.com/curator-go/curator"
 	"github.com/satori/go.uuid"
 
-	"github.com/LiveRamp/hank-go-client/curatorext"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/curatorext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
 
 	"github.com/pkg/errors"
 )
@@ -26,6 +26,8 @@ type ZkHost struct {
 	metadata           *curatorext.ZkWatchedNode
 	assignedPartitions *curatorext.ZkWatchedNode
 	state              *curatorext.ZkWatchedNode
+
+	client curator.CuratorFramework
 
 	listener thriftext.DataChangeNotifier
 }
@@ -78,7 +80,7 @@ func CreateZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, lis
 		return nil, errors.Wrapf(err, "error creating state node.  path: %v", statePath)
 	}
 
-	return &ZkHost{rootPath, node, partitionAssignments, state, listener, }, nil
+	return &ZkHost{rootPath, node, partitionAssignments, state, client, listener}, nil
 }
 
 func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, listener thriftext.DataChangeNotifier, rootPath string) (interface{}, error) {
@@ -86,6 +88,10 @@ func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, liste
 	node, err := curatorext.LoadThriftWatchedNode(client, rootPath, iface.NewHostMetadata)
 	if err != nil {
 		return nil, err
+	}
+
+	if node == nil {
+		return nil, nil
 	}
 
 	adapter := &thriftext.Adapter{Notifier: listener}
@@ -105,7 +111,7 @@ func loadZkHost(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, liste
 
 	state.AddListener(adapter)
 
-	return &ZkHost{rootPath, node, assignments, state, listener}, nil
+	return &ZkHost{rootPath, node, assignments, state, client, listener}, nil
 }
 
 func assignmentsRoot(rootPath string) string {
@@ -214,9 +220,11 @@ func (p *ZkHost) GetMetadata(ctx *thriftext.ThreadCtx) *hank.HostMetadata {
 func (p *ZkHost) GetAssignedDomains(ctx *thriftext.ThreadCtx) []iface.HostDomain {
 	assignedDomains := iface.AsHostAssignmentsMetadata(p.assignedPartitions.Get())
 
-	hostDomains := []iface.HostDomain{}
-	for domainId := range assignedDomains.Domains {
-		hostDomains = append(hostDomains, newZkHostDomain(p, iface.DomainID(domainId)))
+	var hostDomains []iface.HostDomain
+	if assignedDomains != nil {
+		for domainId := range assignedDomains.Domains {
+			hostDomains = append(hostDomains, newZkHostDomain(p, iface.DomainID(domainId)))
+		}
 	}
 
 	return hostDomains
@@ -299,4 +307,8 @@ func (p *ZkHost) GetHostDomain(ctx *thriftext.ThreadCtx, domainId iface.DomainID
 
 	return newZkHostDomain(p, domainId)
 
+}
+
+func (p *ZkHost) Delete() {
+	p.client.Delete().DeletingChildrenIfNeeded().ForPath(p.path)
 }

@@ -8,10 +8,10 @@ import (
 	"github.com/curator-go/curator"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/LiveRamp/hank-go-client/fixtures"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
-	"github.com/LiveRamp/hank-go-client/zk_coordinator"
+	"github.com/LiveRamp/hank-go/fixtures"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
+	"github.com/LiveRamp/hank-go/zk_coordinator"
 )
 
 func Exception() *hank.HankResponse {
@@ -115,7 +115,7 @@ func setupFailingServerClient(t *testing.T, ctx *thriftext.ThreadCtx, client cur
 func setupServerClient(t *testing.T, server hank.PartitionServer, ctx *thriftext.ThreadCtx, client curator.CuratorFramework, i int) (iface.Host, func(), *HostConnection) {
 	host, close := createHostServer(t, ctx, client, i, server)
 
-	conn, _ := NewHostConnection(host, 100, 100, 1, 100, 100)
+	conn, _ := NewHostConnection(host, 100, 1000, 1, 1000, 1000)
 	fixtures.WaitUntilOrFail(t, func() bool {
 		return conn.IsServing()
 	})
@@ -141,11 +141,12 @@ func byAddress(connections []*HostConnection) map[string][]*HostConnection {
 
 func setUpCoordinator(client curator.CuratorFramework) (*thriftext.ThreadCtx, iface.Domain) {
 	ctx := thriftext.NewThreadCtx()
-	cdr, _ := zk_coordinator.NewZkCoordinator(client,
+	cdr, _ := zk_coordinator.InitializeZkCoordinator(client,
 		"/hank/domains",
 		"/hank/ring_groups",
 		"/hank/domain_groups",
 	)
+
 	domain, _ := cdr.AddDomain(ctx, "domain1", 1, "", "", "", nil)
 
 	return ctx, domain
@@ -356,10 +357,10 @@ func TestOneHanging(t *testing.T) {
 	lock := sync.Mutex{}
 	lock.Lock()
 
-	ctx, domain := setUpCoordinator(client)
+	_, domain := setUpCoordinator(client)
 
-	handler1, _, close1, h1conn1 := setupHangingServerClient(t, ctx, client, 1, &lock)
-	handler2, _, close2, h2conn1 := setupCountingServerClient(t, ctx, client, 2)
+	handler1, _, close1, h1conn1 := setupHangingServerClient(t, thriftext.NewThreadCtx(), client, 1, &lock)
+	handler2, _, close2, h2conn1 := setupCountingServerClient(t, thriftext.NewThreadCtx(), client, 2)
 
 	pool, _ := NewHostConnectionPool(byAddress([]*HostConnection{h1conn1, h2conn1}), NO_SEED, []string{})
 

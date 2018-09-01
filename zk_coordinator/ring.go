@@ -7,9 +7,9 @@ import (
 
 	"github.com/curator-go/curator"
 
-	"github.com/LiveRamp/hank-go-client/curatorext"
-	"github.com/LiveRamp/hank-go-client/iface"
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/curatorext"
+	"github.com/LiveRamp/hank-go/iface"
+	"github.com/LiveRamp/hank-go/thriftext"
 )
 
 var RING_REGEX = regexp.MustCompile("ring-([0-9]+)")
@@ -36,7 +36,7 @@ func loadZkRing(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, liste
 			return nil, err
 		}
 
-		hosts, err := curatorext.NewZkWatchedMap(client, path.Join(root, HOSTS_PATH_SEGMENT), listener, loadZkHost)
+		hosts, err := curatorext.NewZkWatchedMap(client, false, path.Join(root, HOSTS_PATH_SEGMENT), listener, loadZkHost)
 		if err != nil {
 			return nil, err
 		}
@@ -50,7 +50,7 @@ func loadZkRing(ctx *thriftext.ThreadCtx, client curator.CuratorFramework, liste
 func createZkRing(ctx *thriftext.ThreadCtx, root string, num iface.RingID, listener thriftext.DataChangeNotifier, client curator.CuratorFramework) (*ZkRing, error) {
 	curatorext.CreateWithParents(client, curator.PERSISTENT, root, nil)
 
-	hosts, err := curatorext.NewZkWatchedMap(client, path.Join(root, HOSTS_PATH_SEGMENT), listener, loadZkHost)
+	hosts, err := curatorext.NewZkWatchedMap(client, true, path.Join(root, HOSTS_PATH_SEGMENT), listener, loadZkHost)
 	if err != nil {
 		return nil, err
 	}
@@ -88,4 +88,16 @@ func (p *ZkRing) GetHosts(ctx *thriftext.ThreadCtx) []iface.Host {
 	}
 
 	return hosts
+}
+
+func (p *ZkRing) RemoveHost(ctx *thriftext.ThreadCtx, hostName string, port int) bool {
+
+	for _, item := range p.GetHosts(ctx) {
+		if (*item.GetAddress() == iface.PartitionServerAddress{HostName: hostName, PortNumber: int32(port)}) {
+			item.Delete()
+			return true
+		}
+	}
+
+	return false
 }

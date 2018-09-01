@@ -9,8 +9,12 @@ import (
 	"github.com/curator-go/curator/recipes/cache"
 	"github.com/samuel/go-zookeeper/zk"
 
-	"github.com/LiveRamp/hank-go-client/thriftext"
+	"github.com/LiveRamp/hank-go/thriftext"
 
+	"fmt"
+	"sync"
+
+	errors2 "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,7 +24,6 @@ type Deserializer func(ctx *thriftext.ThreadCtx, raw []byte, constructor Constru
 type Serializer func(ctx *thriftext.ThreadCtx, val interface{}) ([]byte, error)
 
 type ZkWatchedNode struct {
-	node        *cache.TreeCache
 	client      curator.CuratorFramework
 	path        string
 	constructor Constructor
@@ -29,6 +32,8 @@ type ZkWatchedNode struct {
 
 	serializer   Serializer
 	deserializer Deserializer
+
+	lock *sync.Mutex
 
 	value interface{}
 	stat  *zk.Stat
@@ -39,6 +44,9 @@ type ObjLoader struct {
 }
 
 func (p *ObjLoader) ChildEvent(client curator.CuratorFramework, event cache.TreeCacheEvent) error {
+
+	p.watchedNode.lock.Lock()
+	defer p.watchedNode.lock.Unlock()
 
 	prevVersion := int32(-1)
 
@@ -70,9 +78,12 @@ func (p *ObjLoader) ChildEvent(client curator.CuratorFramework, event cache.Tree
 
 	if p.watchedNode.stat != nil && p.watchedNode.stat.Version != prevVersion {
 		for _, listener := range p.watchedNode.listeners {
-			err := listener.OnDataChange(p.watchedNode.value, event.Data.Path())
-			if err != nil {
-				log.WithField("removed_path", event.Data.Path()).WithError(err).Error("error OnDataChange")
+
+			if event.Data != nil {
+				err := listener.OnDataChange(p.watchedNode.value, event.Data.Path())
+				if err != nil {
+					log.WithField("removed_path", event.Data.Path()).WithError(err).Error("error OnDataChange")
+				}
 			}
 		}
 	}
@@ -102,10 +113,7 @@ func NewZkWatchedNode(
 
 func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor Constructor, serializer Serializer, deserializer Deserializer, requireData bool) (*ZkWatchedNode, error) {
 
-	//  TODO we might need a pool of these -- evaluate in production.  in a more civilized world, we'd just use a ThreadLocal
-	ctx := thriftext.NewThreadCtx()
-
-	watchedNode := &ZkWatchedNode{client: client, path: path, constructor: constructor, ctx: ctx, listeners: []thriftext.DataListener{}, serializer: serializer, deserializer: deserializer}
+	watchedNode := &ZkWatchedNode{client: client, path: path, constructor: constructor, ctx: thriftext.NewThreadCtx(), listeners: []thriftext.DataListener{}, serializer: serializer, deserializer: deserializer, lock: &sync.Mutex{}}
 
 	node := cache.NewTreeCache(client, path, cache.DefaultTreeCacheSelector).
 		SetMaxDepth(0).
@@ -117,10 +125,8 @@ func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor
 		return nil, err
 	}
 
-	watchedNode.node = node
-
 	backoffStrat := backoff.NewExponentialBackOff()
-	backoffStrat.MaxElapsedTime = time.Second * 4
+	backoffStrat.MaxElapsedTime = time.Second * 15
 
 	//	IF we don't require the node to exist, AND the path definitely doesn't exist, return early
 	if !requireData {
@@ -136,13 +142,34 @@ func LoadZkWatchedNode(client curator.CuratorFramework, path string, constructor
 	err = backoff.Retry(func() error {
 		res := watchedNode.value != nil
 		if !res {
-			return errors.New("Node does not exist yet")
+			return errors.New("node does not exist yet")
 		}
 		return nil
 	}, backoffStrat)
 
 	if err != nil {
-		return nil, errors.New("Never found data for node path " + path)
+
+		fmtStr := "Never found data for node path %v"
+
+		//	if the path doesn't exist, we shouldn't be here at all -- indicate upstream somehow that this node should not exist
+		stat, err := client.CheckExists().ForPath(path)
+		if err != nil {
+			return nil, errors2.Wrapf(err, fmtStr, path)
+		}
+
+		if stat == nil {
+			return nil, nil
+		}
+
+		data, err := client.GetData().ForPath(path)
+		if err != nil {
+			return nil, errors2.Wrapf(err, fmtStr, path)
+		}
+
+		//	if the path exists but doesn't have data (but requireData), something is highly wtf
+		//	if the path exists and has data and requireData, something is wtf
+		return nil, errors.New(fmt.Sprintf("Never found data for node path %v, path exists, data exists = %v", path, data != nil))
+
 	}
 
 	return watchedNode, nil
