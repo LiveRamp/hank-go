@@ -15,6 +15,8 @@ The Go Client has several options that govern retries, timeouts, number of conne
 7) ResponseCacheNumItems: Size of client cache.       
 8) ResponseCacheExpiryTime: Time till cache item is expired.
 
+A quick example of how to use the client can be seen [here](https://github.com/LiveRamp/hank-go/blob/update_readme/main/simple_query_script.go).
+
 ## Connecting to Hank
 
 The client connects to Hank as such:
@@ -34,5 +36,3 @@ Queries proceed as follows:
 4) If no connection is available, the query fails. Otherwise the client attempts to query the selected server, respecting time out settings.
 
 **Note: Various query options will affect query latency. The client is asynchronous and threadsafe - it is okay for multiple go routines to be using the same client at the same time.**
-
-A quick example of how to use the client can be seen [here](https://github.com/LiveRamp/hank-go/blob/update_readme/main/simple_query_script.go).
