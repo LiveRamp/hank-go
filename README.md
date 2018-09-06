@@ -6,8 +6,8 @@ In addition, since Hank uses rendevous hashing, the Client also handles figuring
 
 The Go Client has several options that govern retries, timeouts, number of connections and caching. 
 
-1) NumConnectionsPerHost: Number of separate threads connecting to a single host. The greater the number, the greater the number of simultaneous queries per host.
-2) MinConnectionsPerPartition: Time to wait for a connection to a host before giving up. 
+1) NumConnectionsPerHost: Number of separate connections to a single host. The greater the number, the greater the number of simultaneous queries per host.
+2) MinConnectionsPerPartition: Minimum number of connections to a single partition of data. Minimum  
 3) TryLockTimeoutMs: Time to wait for a connection to a host before giving up. Connections might not be available if a specific server is experiencing high loads.
 4) EstablishConnectionTimeoutMs: Time before a connection attempt fails. Governs how long client takes to start up.
 5) EstablishConnectionRetries: Number of times to try to connect to a server. Governs how long client takes to start up.
