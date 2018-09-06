@@ -19,6 +19,7 @@ import (
 )
 
 func main() {
+	// This sample script reads from a file of test values and queries Hank.
 	argsWithoutProg := os.Args[1:]
 	
 	// Curator helps manage zookeeper.
