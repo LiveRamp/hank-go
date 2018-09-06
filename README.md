@@ -2,7 +2,7 @@
 
 The Hank Go Client handles connecting to Hank in a reliable manner - there should be no visible effect if Rings or Servers go down.
 
-In addition, since Hank uses rendevous hashing, the Client also handles figuring out what servers queries are routed to.
+In addition, since Hank uses rendevous hashing, the Client also handles figuring out which servers queries are routed to.
 
 The Go Client has several options that govern retries, timeouts, number of connections and caching. 
 
