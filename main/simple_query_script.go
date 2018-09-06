@@ -19,8 +19,10 @@ import (
 )
 
 func main() {
+	// This sample script reads from a file of test values and queries Hank.
 	argsWithoutProg := os.Args[1:]
-
+	
+	// Curator helps manage zookeeper.
 	client := curator.NewClient(argsWithoutProg[0], curator.NewRetryNTimes(1, time.Second))
 	client.Start()
 
@@ -31,13 +33,15 @@ func main() {
 		log.WithError(coordErr).Error("error creating coordinator")
 		return
 	}
-
+	
+	// Retrieve what rings to connect to.
 	group := coordinator.GetRingGroup("spruce-aws")
 	ring0 := group.GetRing(iface.RingID(0))
 
 	hosts := ring0.GetHosts(ctx)
 	host := hosts[0]
-
+	
+	// Connect to Hank.
 	conn, _ := hank_client.NewHostConnection(host, 100, 100, 1, 100, 100)
 
 	domain := coordinator.GetDomain(argsWithoutProg[1])
@@ -64,7 +68,8 @@ func main() {
 			log.WithError(err).Error("error decoding string")
 			return
 		}
-
+		
+		// query Hank.
 		val, err := conn.Get(domainId, bytes, false)
 		if err != nil {
 			log.WithError(err).Error("error querying")
