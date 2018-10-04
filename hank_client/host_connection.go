@@ -159,10 +159,17 @@ func (p *HostConnection) Get(id iface.DomainID, key []byte, isLockHeld bool) (*h
 func (p *HostConnection) connect() error {
 
 	host := p.host.GetAddress().Print()
-	p.socket, _ = thrift.NewTSocketTimeout(host, time.Duration(p.establishConnectionTimeoutMs*1e6))
-	framed := thrift.NewTFramedTransportMaxLength(p.socket, 16384000)
 
-	err := framed.Open()
+	socket, err := thrift.NewTSocketTimeout(host, time.Duration(p.establishConnectionTimeoutMs*1e6))
+	if err != nil {
+		err = p.Disconnect()
+		return errors.Wrapf(err, "error creating socket to host %v", host)
+	}
+
+	p.socket = socket
+
+	framed := thrift.NewTFramedTransportMaxLength(p.socket, 16384000)
+	err = framed.Open()
 	if err != nil {
 		p.Disconnect()
 		return errors.Wrapf(err, "error connecting to host %v", host)
