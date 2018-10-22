@@ -294,7 +294,7 @@ func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isL
 			if numTries < maxNumTries {
 				return nil, nil
 			} else {
-				return nil, errors.Errorf("failed to perform query. host: %v num_tries: %v domain: %v key: %v", connection.connection.host.GetAddress(), numTries, domain.GetName(), hex.EncodeToString(key))
+				return nil, errors.Errorf("failed to perform query. host: %v num_tries: %v domain: %v key: %v, last error: %v", connection.connection.host.GetAddress(), numTries, domain.GetName(), hex.EncodeToString(key), err)
 			}
 		}
 	}
