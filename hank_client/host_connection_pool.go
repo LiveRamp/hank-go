@@ -2,6 +2,7 @@ package hank_client
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"sort"
 	"sync"
@@ -267,6 +268,14 @@ func newTrue() *bool {
 	return &b
 }
 
+// QueryFailedErr is a classification of errors that are returned when
+// a query is attempted on a Hank server but the query fails.
+type QueryFailedErr struct {
+	msg string
+}
+
+func (e *QueryFailedErr) Error() string { return e.msg }
+
 func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isLockHeld bool, domain iface.Domain, key []byte, numTries int32, maxNumTries int32) (*hank.HankResponse, error) {
 	domainId := domain.GetId()
 
@@ -294,7 +303,9 @@ func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isL
 			if numTries < maxNumTries {
 				return nil, nil
 			} else {
-				return nil, errors.Errorf("failed to perform query. host: %v num_tries: %v domain: %v key: %v, last error: %v", connection.connection.host.GetAddress(), numTries, domain.GetName(), hex.EncodeToString(key), err)
+				return nil, &QueryFailedErr{msg: fmt.Sprintf(
+					"failed to perform query. host: %v num_tries: %v domain: %v key: %v, last error: %v",
+					connection.connection.host.GetAddress(), numTries, domain.GetName(), hex.EncodeToString(key), err)}
 			}
 		}
 	}
