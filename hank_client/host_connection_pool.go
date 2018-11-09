@@ -271,10 +271,10 @@ func newTrue() *bool {
 // QueryFailedErr is a classification of errors that are returned when
 // a query is attempted on a Hank server but the query fails.
 type QueryFailedErr struct {
-	msg string
+	Msg string
 }
 
-func (e *QueryFailedErr) Error() string { return e.msg }
+func (e *QueryFailedErr) Error() string { return e.Msg }
 
 func (p *HostConnectionPool) attemptQuery(connection *IndexedHostConnection, isLockHeld bool, domain iface.Domain, key []byte, numTries int32, maxNumTries int32) (*hank.HankResponse, error) {
 	domainId := domain.GetId()
