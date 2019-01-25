@@ -39,6 +39,12 @@ type RequestCounters struct {
 	lock *sync.Mutex
 }
 
+type HankCacheResponse struct {
+	*hank.HankResponse
+	Cached bool
+}
+
+
 func NewRequestCounters() *RequestCounters {
 	return &RequestCounters{
 		0,
@@ -336,7 +342,7 @@ func (p *HankSmartClient) updateConnectionCache(ctx *thriftext.ThreadCtx) error 
 	return nil
 }
 
-func (p *HankSmartClient) Get(domainName string, key []byte) (*hank.HankResponse, error) {
+func (p *HankSmartClient) Get(domainName string, key []byte) (*HankCacheResponse, error) {
 
 	domain := p.coordinator.GetDomain(domainName)
 
@@ -352,7 +358,7 @@ type Entry struct {
 	key    string
 }
 
-func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankResponse, error) {
+func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*HankCacheResponse, error) {
 
 	if key == nil {
 		return nil, errors.New("null key")
@@ -366,17 +372,24 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 	entry := strconv.Itoa(int(domainID)) + "-" + string(key)
 
 	var val interface{}
+	var cached = false
 
 	if p.cache != nil {
 		item := p.cache.Get(entry)
 		if item != nil && !item.Expired() {
 			val = item.Value()
+			cached = true
 		}
 	}
 
 	if val != nil {
 		p.counters.increment(1, 1)
-		return val.(*hank.HankResponse), nil
+		var resp = &HankCacheResponse{
+			val.(*hank.HankResponse),
+			cached,
+		}
+
+		return resp, nil
 	} else {
 		p.counters.increment(1, 0)
 
@@ -414,7 +427,8 @@ func (p *HankSmartClient) get(domain iface.Domain, key []byte) (*hank.HankRespon
 				response.Xception, domain.GetName(), partition, key)
 		}
 
-		return response, nil
+
+		return &HankCacheResponse{response, cached}, nil
 
 	}
 
